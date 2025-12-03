@@ -6,7 +6,7 @@ import axios from "axios";
 import "../../../styles/ExamPageTC.css";
 import { useNavigate } from "react-router-dom";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://khoaluantotnghiep-5ff3.onrender.com/api";
 
 function ExamPageTC() {
   const [exams, setExams] = useState([]);

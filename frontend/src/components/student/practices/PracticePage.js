@@ -42,11 +42,11 @@ const [seconds, setSeconds] = useState(() => {
   useEffect(() => {
     const fetchExamDetails = async () => {
       try {
-        const examRes = await axios.get(`http://localhost:5000/api/practice-exams/${examId}`);
+        const examRes = await axios.get(`https://khoaluantotnghiep-5ff3.onrender.com/api/practice-exams/${examId}`);
         setExamInfo(examRes.data);
 
         const questionsRes = await axios.get(
-          `http://localhost:5000/api/practice-exams/${examId}/questions`
+          `https://khoaluantotnghiep-5ff3.onrender.com/api/practice-exams/${examId}/questions`
         );
         setQuestions(questionsRes.data || []);
       } catch (err) {
@@ -210,7 +210,7 @@ const handleSubmitExam = () => {
             {question.imageUrl && (
               <div className="question-image-inline">
                 <img
-                  src={`http://localhost:5000${question.imageUrl}`}
+                  src={`https://khoaluantotnghiep-5ff3.onrender.com${question.imageUrl}`}
                   alt="question-image"
                   onError={(e) => {
                     console.warn(`❌ Failed to load image: ${question.imageUrl}`);

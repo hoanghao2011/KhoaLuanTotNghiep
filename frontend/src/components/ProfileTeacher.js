@@ -93,10 +93,10 @@ function Profile() {
         setLoading(true);
         const [assignData, classesRes, semestersRes] = await Promise.all([
           fetchTeachingAssignments(userInfo._id),
-          axios.get("http://localhost:5000/api/classes", {
+          axios.get("https://khoaluantotnghiep-5ff3.onrender.com/api/classes", {
             params: { userId: userInfo._id, role: userInfo.role },
           }),
-          axios.get("http://localhost:5000/api/semesters"),
+          axios.get("https://khoaluantotnghiep-5ff3.onrender.com/api/semesters"),
         ]);
 
         setAssignments(assignData);
@@ -144,7 +144,7 @@ function Profile() {
     try {
       setUploading(true);
       const res = await axios.post(
-        `http://localhost:5000/api/users/upload-avatar`,
+        `https://khoaluantotnghiep-5ff3.onrender.com/api/users/upload-avatar`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );

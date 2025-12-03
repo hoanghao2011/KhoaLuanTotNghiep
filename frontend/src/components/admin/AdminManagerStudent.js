@@ -6,7 +6,7 @@ import StudentDetailModal from "../admin/StudentDetailModal";
 const normalizeString = (str) =>
   str?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() || "";
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = "https://khoaluantotnghiep-5ff3.onrender.com/api";
 
 const AdminManagerStudent = () => {
   const [students, setStudents] = useState([]);

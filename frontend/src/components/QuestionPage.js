@@ -769,11 +769,11 @@ function QuestionPage({ categoryId, categoryName, subjectName, subjectId, onGoBa
                       {q.imageUrl && (
                         <div style={{ marginBottom: "12px", marginTop: "10px" }}>
                           <img
-                            src={`http://localhost:5000${q.imageUrl}`}
+                            src={`https://khoaluantotnghiep-5ff3.onrender.com${q.imageUrl}`}
                             alt="question"
                             style={{ maxWidth: "100%", maxHeight: "200px", borderRadius: "8px", cursor: "pointer" }}
                             onClick={() => {
-                              setSelectedImage(`http://localhost:5000${q.imageUrl}`);
+                              setSelectedImage(`https://khoaluantotnghiep-5ff3.onrender.com${q.imageUrl}`);
                               setShowImageModal(true);
                             }}
                           />

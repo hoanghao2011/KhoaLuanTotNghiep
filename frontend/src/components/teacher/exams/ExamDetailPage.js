@@ -6,7 +6,7 @@ import { fetchTestExamQuestions, addManualTestQuestion, addBulkTestQuestions, de
 import "../../../styles/ExamDetailPage.css";
 import RichTextEditor from "../../RichTextEditor";
 
-const BASE_URL = "http://localhost:5000/api";
+const BASE_URL = "https://khoaluantotnghiep-5ff3.onrender.com/api";
 
 function ExamDetailPage() {
   const { examId } = useParams();
@@ -574,7 +574,7 @@ function ExamDetailPage() {
                       {questionData.imageUrl && (
                         <div className="question-image">
                           <img
-                            src={`http://localhost:5000${questionData.imageUrl}`}
+                            src={`https://khoaluantotnghiep-5ff3.onrender.com${questionData.imageUrl}`}
                             alt="question"
                           />
                         </div>

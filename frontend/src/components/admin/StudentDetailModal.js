@@ -16,8 +16,8 @@ function StudentDetailModal({ student, onClose }) {
     const fetchClasses = async () => {
       try {
         const [classesRes, activeSemesterRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/classes"),
-          axios.get("http://localhost:5000/api/semesters/active"),
+          axios.get("https://khoaluantotnghiep-5ff3.onrender.com/api/classes"),
+          axios.get("https://khoaluantotnghiep-5ff3.onrender.com/api/semesters/active"),
         ]);
 
         const activeSemester = activeSemesterRes.data;
@@ -49,7 +49,7 @@ function StudentDetailModal({ student, onClose }) {
     setResetting(true);
     try {
       await axios.post(
-        `http://localhost:5000/api/users/${student._id}/reset-password`
+        `https://khoaluantotnghiep-5ff3.onrender.com/api/users/${student._id}/reset-password`
       );
       setShowConfirm(false);
       setShowSuccess(true); // show modal success

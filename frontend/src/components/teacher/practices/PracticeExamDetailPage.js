@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import "../../../styles/PracticeExamDetailPage.css";
 import RichTextEditor from "../../RichTextEditor"; 
 
-const BASE_URL = "http://localhost:5000/api";
+const BASE_URL = "https://khoaluantotnghiep-5ff3.onrender.com/api";
 
 function PracticeExamDetailPage({ setPage }) {
   const { examId } = useParams();
@@ -637,7 +637,7 @@ const confirmDeleteQuestion = async () => {
                 {question.imageUrl && (
                   <div className="question-image">
                     <img
-                      src={`http://localhost:5000${question.imageUrl}`}
+                      src={`https://khoaluantotnghiep-5ff3.onrender.com${question.imageUrl}`}
                       alt="question"
                     />
                   </div>
@@ -943,7 +943,7 @@ const confirmDeleteQuestion = async () => {
                                     dangerouslySetInnerHTML={{ __html: `Câu ${index + 1}: ${question.title}` }} />
                                   {question.imageUrl && (
                                     <div style={{ marginBottom: "12px", marginLeft: "10px" }}>
-                                      <img src={`http://localhost:5000${question.imageUrl}`} alt="question image"
+                                      <img src={`https://khoaluantotnghiep-5ff3.onrender.com${question.imageUrl}`} alt="question image"
                                         style={{
                                           maxWidth: "100%", maxHeight: "250px", borderRadius: "6px",
                                           border: "1px solid #ddd", objectFit: "contain"

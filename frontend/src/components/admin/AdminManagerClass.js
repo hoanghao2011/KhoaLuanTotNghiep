@@ -3,7 +3,7 @@ import axios from "axios";
 import * as XLSX from "xlsx";
 import "../../styles/AdminManagerClass.css";
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = "https://khoaluantotnghiep-5ff3.onrender.com/api";
 
 function AdminManagerClass() {
   const [classes, setClasses] = useState([]);

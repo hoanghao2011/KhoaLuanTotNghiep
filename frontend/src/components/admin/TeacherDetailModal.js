@@ -23,9 +23,9 @@ function TeacherDetailModal({ teacher, onClose, onUpdate }) {
     try {
       setLoading(true);
       const [activeRes, assignRes, subjectsRes] = await Promise.all([
-        axios.get("http://localhost:5000/api/semesters/active"),
-        axios.get(`http://localhost:5000/api/teaching-assignments/teacher/${teacher._id}`),
-        axios.get("http://localhost:5000/api/subjects")
+        axios.get("https://khoaluantotnghiep-5ff3.onrender.com/api/semesters/active"),
+        axios.get(`https://khoaluantotnghiep-5ff3.onrender.com/api/teaching-assignments/teacher/${teacher._id}`),
+        axios.get("https://khoaluantotnghiep-5ff3.onrender.com/api/subjects")
       ]);
 
       const activeSemesterId = activeRes.data._id;
@@ -50,7 +50,7 @@ function TeacherDetailModal({ teacher, onClose, onUpdate }) {
     if (!window.confirm(`Đặt lại mật khẩu giảng viên "${teacher.name}" về 123456?`)) return;
     setResetting(true);
     try {
-      await axios.post(`http://localhost:5000/api/users/${teacher._id}/reset-password`);
+      await axios.post(`https://khoaluantotnghiep-5ff3.onrender.com/api/users/${teacher._id}/reset-password`);
       alert("Reset mật khẩu thành công! Mật khẩu mới: 123456");
     } catch (err) {
       alert("Lỗi reset mật khẩu!");
@@ -69,14 +69,14 @@ function TeacherDetailModal({ teacher, onClose, onUpdate }) {
       console.log("Assignments to delete:", toDelete); // Logging để debug
 
       const deletePromises = toDelete.map(a =>
-        axios.delete(`http://localhost:5000/api/teaching-assignments/${a._id}`)
+        axios.delete(`https://khoaluantotnghiep-5ff3.onrender.com/api/teaching-assignments/${a._id}`)
       );
 
       const existingIds = new Set(latestAssignments.map(a => a.subject._id));
       const createPromises = selectedSubjectIds
         .filter(id => !existingIds.has(id))
         .map(subjectId =>
-          axios.post("http://localhost:5000/api/teaching-assignments", {
+          axios.post("https://khoaluantotnghiep-5ff3.onrender.com/api/teaching-assignments", {
             teacher: teacher._id,
             subject: subjectId,
             semester: activeSemesterId
@@ -97,11 +97,11 @@ function TeacherDetailModal({ teacher, onClose, onUpdate }) {
 
   const handleSaveSubjects = async () => {
     try {
-      const activeRes = await axios.get("http://localhost:5000/api/semesters/active");
+      const activeRes = await axios.get("https://khoaluantotnghiep-5ff3.onrender.com/api/semesters/active");
       const activeSemesterId = activeRes.data._id;
 
       const latestAssignRes = await axios.get(
-        `http://localhost:5000/api/teaching-assignments/teacher/${teacher._id}`
+        `https://khoaluantotnghiep-5ff3.onrender.com/api/teaching-assignments/teacher/${teacher._id}`
       );
       const latestAssignments = latestAssignRes.data.filter(a => a.semester === activeSemesterId);
 
@@ -111,7 +111,7 @@ function TeacherDetailModal({ teacher, onClose, onUpdate }) {
       const removedSubjectIds = [...previouslySelected].filter(id => !nowSelected.has(id));
 
       const hasExamRes = await axios.get(
-        `http://localhost:5000/api/exams/teacher/${teacher._id}/subjects`
+        `https://khoaluantotnghiep-5ff3.onrender.com/api/exams/teacher/${teacher._id}/subjects`
       );
       const examsBySubject = hasExamRes.data;
 

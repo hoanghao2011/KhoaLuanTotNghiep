@@ -35,7 +35,7 @@ function Sidebar({ user, onLogout }) {
 
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/users/${currentUser._id}`, {
+      const res = await fetch(`https://khoaluantotnghiep-5ff3.onrender.com/api/users/${currentUser._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password: newPassword }),

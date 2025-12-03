@@ -106,7 +106,7 @@ const handleConfirmSubmit = () => {
 
                       {q.imageUrl && (
                         <img
-                          src={`http://localhost:5000${q.imageUrl}`}
+                          src={`https://khoaluantotnghiep-5ff3.onrender.com${q.imageUrl}`}
                           alt={`Câu ${i + 1}`}
                           style={{
                             maxWidth: "150px",
@@ -116,7 +116,7 @@ const handleConfirmSubmit = () => {
                             cursor: "pointer",
                           }}
                           onClick={() =>
-                            window.open(`http://localhost:5000${q.imageUrl}`, "_blank")
+                            window.open(`https://khoaluantotnghiep-5ff3.onrender.com${q.imageUrl}`, "_blank")
                           }
                         />
                       )}

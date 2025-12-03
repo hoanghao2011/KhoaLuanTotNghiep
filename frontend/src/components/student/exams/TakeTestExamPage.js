@@ -142,7 +142,7 @@ function TakeTestExamPage() {
       console.log("🔍 Checking if student already attempted this exam...");
 
       const checkRes = await fetch(
-        `http://localhost:5000/api/test-exams/${examId}/check-attempt?studentId=${studentId}`
+        `https://khoaluantotnghiep-5ff3.onrender.com/api/test-exams/${examId}/check-attempt?studentId=${studentId}`
       );
 
       if (!checkRes.ok) {
@@ -338,7 +338,7 @@ function TakeTestExamPage() {
 
   const fetchExamForStudent = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/test-exams/student/${examId}/take`);
+      const res = await fetch(`https://khoaluantotnghiep-5ff3.onrender.com/api/test-exams/student/${examId}/take`);
 
       if (!res.ok) {
         let errorMessage = "Không thể tải đề thi";
@@ -549,7 +549,7 @@ function TakeTestExamPage() {
       });
 
       const submitRes = await fetch(
-        `http://localhost:5000/api/test-exams/${examId}/submit`,
+        `https://khoaluantotnghiep-5ff3.onrender.com/api/test-exams/${examId}/submit`,
         {
           method: "POST",
           headers: {
@@ -843,7 +843,7 @@ function TakeTestExamPage() {
               {question.imageUrl && (
                 <div className="question-image-inline">
                   <img
-                    src={`http://localhost:5000${question.imageUrl}`}
+                    src={`https://khoaluantotnghiep-5ff3.onrender.com${question.imageUrl}`}
                     alt="question-image"
                     onError={(e) => {
                       console.warn(`❌ Failed to load image: ${question.imageUrl}`);

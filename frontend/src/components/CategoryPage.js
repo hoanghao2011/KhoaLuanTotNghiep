@@ -3,7 +3,7 @@ import Swal from "sweetalert2";
 import axios from "axios";
 import "../styles/CategoryPage.css";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://khoaluantotnghiep-5ff3.onrender.com/api";
 
 function CategoryPage({ onSelectCategory, selectedSubjectId, onSelectSubject }) {
   const [allSubjects, setAllSubjects] = useState([]);

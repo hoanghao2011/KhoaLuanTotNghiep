@@ -110,7 +110,7 @@ function ReviewTestExamPage() {
 
       // ✅ FIX: Lấy thông tin đề thi (lấy tất cả câu, không shuffle - sẽ sắp xếp dựa trên questionOrder đã lưu)
       // Thay vì gọi /take (có shuffle), gọi /:id (lấy tất cả câu)
-      const examRes = await fetch(`http://localhost:5000/api/test-exams/${examId}`);
+      const examRes = await fetch(`https://khoaluantotnghiep-5ff3.onrender.com/api/test-exams/${examId}`);
       if (!examRes.ok) {
         throw new Error("Không thể tải đề thi");
       }
@@ -119,7 +119,7 @@ function ReviewTestExamPage() {
 
       // Lấy kết quả làm bài
       const resultRes = await fetch(
-        `http://localhost:5000/api/test-exams/${examId}/my-result?studentId=${id}`
+        `https://khoaluantotnghiep-5ff3.onrender.com/api/test-exams/${examId}/my-result?studentId=${id}`
       );
       if (!resultRes.ok) {
         throw new Error("Không thể tải kết quả");
@@ -393,7 +393,7 @@ function ReviewTestExamPage() {
                   {question.imageUrl && (
                     <div style={{ marginBottom: "15px" }}>
                       <img
-                        src={`http://localhost:5000${question.imageUrl}`}
+                        src={`https://khoaluantotnghiep-5ff3.onrender.com${question.imageUrl}`}
                         alt="question"
                         style={{ maxWidth: "100%", height: "auto", borderRadius: "4px" }}
                       />

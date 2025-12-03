@@ -18,7 +18,7 @@ function StudentExamsPage({ studentUsername }) {
       }
 
       try {
-        const res = await axios.get("http://localhost:5000/api/practice-exams", {
+        const res = await axios.get("https://khoaluantotnghiep-5ff3.onrender.com/api/practice-exams", {
           params: { userId: studentUsername, role: "student" },
         });
 

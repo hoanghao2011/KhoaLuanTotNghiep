@@ -3,7 +3,7 @@ import axios from "axios";
 import "../../styles/AdminManagerTeacher.css";
 import TeacherDetailModal from "../admin/TeacherDetailModal";
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = "https://khoaluantotnghiep-5ff3.onrender.com/api";
 
 const normalizeString = (str) =>
   str?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() || "";

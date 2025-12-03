@@ -4,7 +4,7 @@ import Swal from "sweetalert2";
 import "../../../styles/PracticeExamPage.css";
 import { useNavigate } from "react-router-dom";
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = "https://khoaluantotnghiep-5ff3.onrender.com/api";
 
 function PracticeExamPage() {
   const [exams, setExams] = useState([]);

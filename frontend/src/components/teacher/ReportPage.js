@@ -4,7 +4,7 @@ import Swal from "sweetalert2";
 import * as XLSX from "xlsx";
 import "../../styles/ReportPage.css";
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://khoaluantotnghiep-5ff3.onrender.com/api";
 
 function ReportPage() {
   const [classes, setClasses] = useState([]);

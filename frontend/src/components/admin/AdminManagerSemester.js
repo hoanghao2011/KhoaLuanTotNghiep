@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "../../styles/AdminManagerSemester.css";
 
-const API_BASE = "http://localhost:5000/api";
+const API_BASE = "https://khoaluantotnghiep-5ff3.onrender.com/api";
 
 function AdminManagerSemester() {
   const [semesters, setSemesters] = useState([]);

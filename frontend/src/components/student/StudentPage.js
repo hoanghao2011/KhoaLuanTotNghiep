@@ -19,8 +19,8 @@ function StudentPage({ studentUsername }) {
 
       try {
         const [classesRes, semestersRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/classes"),
-          axios.get("http://localhost:5000/api/semesters"),
+          axios.get("https://khoaluantotnghiep-5ff3.onrender.com/api/classes"),
+          axios.get("https://khoaluantotnghiep-5ff3.onrender.com/api/semesters"),
         ]);
 
         const allClasses = classesRes.data;
@@ -144,7 +144,7 @@ function ClassDetail({ classInfo, onBack, onStartExam, isExamOpen }) {
         }
 
         const res = await axios.get(
-          "http://localhost:5000/api/practice-exams/by-class-subject",
+          "https://khoaluantotnghiep-5ff3.onrender.com/api/practice-exams/by-class-subject",
           {
             params: { classId: classInfo._id, subjectId },
           }

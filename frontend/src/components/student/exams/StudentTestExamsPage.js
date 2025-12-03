@@ -35,7 +35,7 @@ function StudentTestExamsPage({ studentUsername }) {
       for (let exam of exams) {
         try {
           const res = await fetch(
-            `http://localhost:5000/api/test-exams/${exam._id}/check-attempt?studentId=${studentId}`
+            `https://khoaluantotnghiep-5ff3.onrender.com/api/test-exams/${exam._id}/check-attempt?studentId=${studentId}`
           );
           const data = await res.json();
           attemptStatus[exam._id] = data.hasAttempted;
@@ -61,7 +61,7 @@ function StudentTestExamsPage({ studentUsername }) {
 
       try {
         // 1. Lấy tất cả lớp
-        const classesRes = await axios.get("http://localhost:5000/api/classes");
+        const classesRes = await axios.get("https://khoaluantotnghiep-5ff3.onrender.com/api/classes");
         const allClasses = classesRes.data;
 
         // 2. Lọc lớp của sinh viên
@@ -73,7 +73,7 @@ function StudentTestExamsPage({ studentUsername }) {
         const examPromises = myClasses.map(async (cls) => {
           try {
             const res = await axios.get(
-              "http://localhost:5000/api/test-exams/student/published",
+              "https://khoaluantotnghiep-5ff3.onrender.com/api/test-exams/student/published",
               { params: { studentClassId: cls._id } }
             );
             console.log(`✅ Found ${res.data.length} published exams for student in class ${cls._id}`);
@@ -118,7 +118,7 @@ function StudentTestExamsPage({ studentUsername }) {
         const attemptStatus = {};
         for (let exam of allTestExams) {
           try {
-            const url = `http://localhost:5000/api/test-exams/${exam._id}/check-attempt?studentId=${studentId}`;
+            const url = `https://khoaluantotnghiep-5ff3.onrender.com/api/test-exams/${exam._id}/check-attempt?studentId=${studentId}`;
             console.log(`🔍 Request URL: ${url}`); // ✅ DEBUG
             const res = await axios.get(url);
             console.log(`✅ Check attempt for ${exam.title}: ${res.data.hasAttempted}`); // ✅ DEBUG
