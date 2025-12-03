@@ -1,6 +1,10 @@
 import axios from "axios";
 
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+// Debug: Log environment variable
+console.log("REACT_APP_API_URL:", process.env.REACT_APP_API_URL);
+
+const API_URL = "https://khoaluantotnghiep-5ff3.onrender.com"; // Hardcoded for testing
+// Fallback: const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
 
 export const fetchSubjects = async () => {
   const response = await axios.get(`${API_URL}/subjects`);
