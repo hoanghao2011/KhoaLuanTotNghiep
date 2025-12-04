@@ -31,7 +31,13 @@ function TeacherDetailModal({ teacher, onClose, onUpdate }) {
       ]);
 
       const activeSemesterId = activeRes.data._id;
+      console.log("Active Semester ID:", activeSemesterId);
+      console.log("All Assignments Details:");
+      assignRes.data.forEach((a, idx) => {
+        console.log(`  [${idx}] Subject: ${a.subject?.name}, Class: ${a.class?.className || 'Chưa xếp'}, Semester: ${a.semester?._id}`);
+      });
       const currentOnes = assignRes.data.filter(a => a.semester?._id === activeSemesterId);
+      console.log("Filtered Count:", currentOnes.length);
 
       setCurrentAssignments(currentOnes);
       setSelectedSubjectIds(currentOnes.map(a => a.subject._id));

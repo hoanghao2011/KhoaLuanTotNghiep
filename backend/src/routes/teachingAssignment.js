@@ -66,6 +66,16 @@ router.post("/", async (req, res) => {
       await Class.findByIdAndUpdate(classId, { teacher, subject });
     }
 
+    // Nếu đang thêm assignment với class, xóa assignment cũ của môn này (không có class)
+    if (classId) {
+      await TeachingAssignment.deleteOne({
+        teacher,
+        subject,
+        semester: activeSemester._id,
+        class: null,
+      });
+    }
+
     const query = { teacher, subject, semester: activeSemester._id };
     if (classId !== undefined) query.class = classId || null;
 
