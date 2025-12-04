@@ -380,13 +380,26 @@ const loadExams = async () => {
       return;
     }
 
+    // Helper: Convert UTC datetime to local datetime-local format
+    const getLocalDateTime = (utcDateString) => {
+      if (!utcDateString) return "";
+      const date = new Date(utcDateString);
+      // Format as YYYY-MM-DDTHH:mm without timezone
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
     setExamName(exam.title);
     setSelectedSubject(exam.subject._id);
     setSelectedCategories(exam.categories.map(c => c._id));
     setSelectedClass(exam.class?._id || "");
     setDuration(exam.duration);
     setBufferTime(exam.bufferTime || 5);
-    setOpenTime(exam.openTime ? exam.openTime.substring(0, 16) : "");
+    setOpenTime(getLocalDateTime(exam.openTime));
     setShowResultImmediately(exam.showResultImmediately);
     setShowCorrectAnswers(exam.showCorrectAnswers);
 

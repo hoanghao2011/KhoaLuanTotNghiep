@@ -284,13 +284,26 @@ const handleSaveExam = async () => {
 
       const data = await res.json();
 
+      // Helper: Convert UTC datetime to local datetime-local format
+      const getLocalDateTime = (utcDateString) => {
+        if (!utcDateString) return "";
+        const date = new Date(utcDateString);
+        // Format as YYYY-MM-DDTHH:mm without timezone
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+      };
+
       setIsEditMode(true);
       setEditingExamId(exam._id);
       setExamName(data.title);
       setSelectedSubject(data.subject._id);
       setSelectedCategories(data.categories.map(c => c._id));
-      setOpenTime(data.openTime ? new Date(data.openTime).toISOString().slice(0, 16) : "");
-      setCloseTime(data.closeTime ? new Date(data.closeTime).toISOString().slice(0, 16) : "");
+      setOpenTime(getLocalDateTime(data.openTime));
+      setCloseTime(getLocalDateTime(data.closeTime));
 
       setIsModalOpen(true);
     } catch (error) {
