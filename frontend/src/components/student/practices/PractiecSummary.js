@@ -103,23 +103,6 @@ const handleConfirmSubmit = () => {
                       <span className={`status ${answered ? "answered" : "not-answered"}`}>
                         {answered ? "Đã trả lời" : "Chưa trả lời"}
                       </span>
-
-                      {q.imageUrl && (
-                        <img
-                          src={`https://khoaluantotnghiep-5ff3.onrender.com${q.imageUrl}`}
-                          alt={`Câu ${i + 1}`}
-                          style={{
-                            maxWidth: "150px",
-                            maxHeight: "150px",
-                            borderRadius: "6px",
-                            objectFit: "contain",
-                            cursor: "pointer",
-                          }}
-                          onClick={() =>
-                            window.open(`https://khoaluantotnghiep-5ff3.onrender.com${q.imageUrl}`, "_blank")
-                          }
-                        />
-                      )}
                     </div>
                   </div>
                 );
