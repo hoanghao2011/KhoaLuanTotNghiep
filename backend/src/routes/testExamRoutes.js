@@ -798,8 +798,17 @@ router.put('/:id', async (req, res) => {
       closeTime = calculateCloseTime(newOpenTime, newDuration, newBufferTime);
     }
 
+    // Create updateData WITHOUT spreading req.body to avoid overwriting processed values
     const updateData = {
-      ...req.body,
+      title: req.body.title,
+      subject: req.body.subject,
+      categories: req.body.categories,
+      class: req.body.class,
+      duration: req.body.duration,
+      showResultImmediately: req.body.showResultImmediately,
+      showCorrectAnswers: req.body.showCorrectAnswers,
+      passingScore: req.body.passingScore,
+      description: req.body.description,
       openTime: newOpenTime,
       closeTime,
       bufferTime: newBufferTime,
