@@ -143,17 +143,9 @@ function Sidebar({ user, onLogout }) {
       {/* NÚT ĐĂNG XUẤT */}
       <button
         onClick={() => {
-          // Xóa tất cả dữ liệu liên quan đến user hiện tại
-          const userId = localStorage.getItem("userId");
+          // Chỉ xóa user info, không xóa lịch sử bài luyện tập
           localStorage.removeItem("app_user");
           localStorage.removeItem("userId");
-
-          // Xóa tất cả dữ liệu bài luyện tập của user hiện tại
-          for (let key in localStorage) {
-            if (userId && key.includes(`user${userId}`)) {
-              localStorage.removeItem(key);
-            }
-          }
 
           onLogout();
           navigate("/login");
