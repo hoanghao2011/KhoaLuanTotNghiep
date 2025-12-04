@@ -9,6 +9,10 @@ function StudentExamsPage({ studentUsername }) {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Lấy userId từ current user (app_user) để tách biệt dữ liệu của các user khác nhau
+  const currentUser = JSON.parse(localStorage.getItem("app_user") || "{}");
+  const userId = currentUser._id;
+
   // Lấy tất cả đề sinh viên được tham gia trong học kỳ hiện tại
   useEffect(() => {
     const fetchMyExams = async () => {
@@ -70,7 +74,8 @@ function StudentExamsPage({ studentUsername }) {
 
   // Lấy số lần làm bài từ localStorage
   const getAttemptCount = (examId) => {
-    const history = JSON.parse(localStorage.getItem(`exam-${examId}-history`)) || [];
+    const storageKey = userId ? `exam-${examId}-user${userId}-history` : `exam-${examId}-history`;
+    const history = JSON.parse(localStorage.getItem(storageKey)) || [];
     return history.length;
   };
 
