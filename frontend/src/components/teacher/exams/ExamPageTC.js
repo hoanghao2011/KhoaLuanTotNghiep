@@ -294,7 +294,7 @@ const loadExams = async () => {
       class: selectedClass,
       duration,
       bufferTime,
-      openTime: openTime || null,
+      openTime: openTime || null, // Gửi giá trị datetime-local thô
       showResultImmediately,
       showCorrectAnswers,
       passingScore: 50,
