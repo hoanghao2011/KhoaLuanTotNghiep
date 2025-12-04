@@ -57,12 +57,13 @@ function ExamPageTC() {
 
   const formatDateTime = (dateString) => {
     if (!dateString) return "Chưa đặt";
+    // IMPORTANT: Don't use getHours() - it returns local browser time!
+    // Extract UTC components from ISO string instead
     const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const isoString = date.toISOString(); // e.g., "2025-12-04T01:00:00.000Z"
+    const [datePart, timePart] = isoString.split('T'); // ["2025-12-04", "01:00:00.000Z"]
+    const [year, month, day] = datePart.split('-');
+    const [hours, minutes] = timePart.split(':');
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 
