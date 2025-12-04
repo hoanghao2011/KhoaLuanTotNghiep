@@ -233,8 +233,8 @@ const handleSaveExam = async () => {
     categories: selectedCategories,
     classes: selectedClasses, // Mảng các lớp được chọn
     teacherId: currentUser._id, // Thêm dòng này
-    openTime: openTime ? openTime + ":00" : null, // datetime-local không có giây, thêm :00
-    closeTime: closeTime ? closeTime + ":00" : null,
+    openTime: openTime || null,
+    closeTime: closeTime || null,
   };
 
   try {
@@ -284,22 +284,13 @@ const handleSaveExam = async () => {
 
       const data = await res.json();
 
-      // Server stores time in UTC, need to add 7 hours to display Vietnam time
-      const formatToLocalDateTime = (utcTimeStr) => {
-        if (!utcTimeStr) return "";
-        const date = new Date(utcTimeStr);
-        // Add 7 hours to convert from UTC back to Vietnam display time
-        const vietnamDate = new Date(date.getTime() + 7 * 60 * 60 * 1000);
-        return vietnamDate.toISOString().slice(0, 16);
-      };
-
       setIsEditMode(true);
       setEditingExamId(exam._id);
       setExamName(data.title);
       setSelectedSubject(data.subject._id);
       setSelectedCategories(data.categories.map(c => c._id));
-      setOpenTime(formatToLocalDateTime(data.openTime));
-      setCloseTime(formatToLocalDateTime(data.closeTime));
+      setOpenTime(data.openTime ? new Date(data.openTime).toISOString().slice(0, 16) : "");
+      setCloseTime(data.closeTime ? new Date(data.closeTime).toISOString().slice(0, 16) : "");
 
       setIsModalOpen(true);
     } catch (error) {
