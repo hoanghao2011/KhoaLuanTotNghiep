@@ -710,22 +710,13 @@ router.get('/', async (req, res) => {
 // ✅ POST create exam
 router.post('/', async (req, res) => {
   try {
-    // Helper function: Parse datetime-local string as UTC
-    const parseAsUTC = (dateTimeString) => {
-      if (!dateTimeString) return null;
-      // Add 'Z' to tell JavaScript this is UTC time
-      return new Date(dateTimeString + 'Z');
-    };
-
-    const openTime = parseAsUTC(req.body.openTime);
     let closeTime = null;
-    if (openTime && req.body.duration) {
-      closeTime = calculateCloseTime(openTime, req.body.duration, req.body.bufferTime || 5);
+    if (req.body.openTime && req.body.duration) {
+      closeTime = calculateCloseTime(req.body.openTime, req.body.duration, req.body.bufferTime || 5);
     }
 
     const examData = {
       ...req.body,
-      openTime,
       closeTime,
       maxAttempts: 1,
       status: 'draft',
@@ -783,14 +774,8 @@ router.put('/:id', async (req, res) => {
       return res.status(403).json({ message: 'Không thể chỉnh sửa đề thi này' });
     }
 
-    // Helper function: Parse datetime-local string as UTC
-    const parseAsUTC = (dateTimeString) => {
-      if (!dateTimeString) return null;
-      return new Date(dateTimeString + 'Z');
-    };
-
     let closeTime = exam.closeTime;
-    const newOpenTime = req.body.openTime ? parseAsUTC(req.body.openTime) : exam.openTime;
+    const newOpenTime = req.body.openTime ? new Date(req.body.openTime) : exam.openTime;
     const newDuration = req.body.duration || exam.duration;
     const newBufferTime = req.body.bufferTime !== undefined ? req.body.bufferTime : exam.bufferTime || 5;
 
