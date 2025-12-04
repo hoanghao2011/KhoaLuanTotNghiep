@@ -31,8 +31,9 @@ const ExamReview = () => {
       }
     };
 
-    // Lấy userId từ localStorage để tách biệt dữ liệu của các user khác nhau
-    const userId = localStorage.getItem("userId");
+    // Lấy userId từ current user (app_user) để tách biệt dữ liệu của các user khác nhau
+    const currentUser = JSON.parse(localStorage.getItem("app_user") || "{}");
+    const userId = currentUser._id;
     const storageKey = userId ? `exam-${examId}-user${userId}-history` : `exam-${examId}-history`;
     const storedHistory = JSON.parse(localStorage.getItem(storageKey) || "[]");
     setHistory(storedHistory);
