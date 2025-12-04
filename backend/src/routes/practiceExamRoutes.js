@@ -354,8 +354,8 @@ router.post("/", async (req, res) => {
       duration: parseInt(duration) || 60,
       attempts: parseInt(attempts) || 1,
       scorePerQuestion: parseFloat(scorePerQuestion) || 1,
-      openTime: openTime ? new Date(openTime) : null,
-      closeTime: closeTime ? new Date(closeTime) : null,
+      openTime: openTime ? new Date(openTime + 'Z') : null,
+      closeTime: closeTime ? new Date(closeTime + 'Z') : null,
     };
 
     const newExam = new PracticeExam(examData);
@@ -419,8 +419,8 @@ router.put("/:id", async (req, res) => {
       scorePerQuestion: parseFloat(req.body.scorePerQuestion) || exam.scorePerQuestion,
     };
 
-    if (req.body.openTime?.trim()) updateData.openTime = new Date(req.body.openTime);
-    if (req.body.closeTime?.trim()) updateData.closeTime = new Date(req.body.closeTime);
+    if (req.body.openTime?.trim()) updateData.openTime = new Date(req.body.openTime + 'Z');
+    if (req.body.closeTime?.trim()) updateData.closeTime = new Date(req.body.closeTime + 'Z');
 
     const updatedExam = await PracticeExam.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true })
       .populate('subject', 'name')

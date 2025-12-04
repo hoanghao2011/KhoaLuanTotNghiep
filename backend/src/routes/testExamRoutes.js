@@ -710,13 +710,17 @@ router.get('/', async (req, res) => {
 // ✅ POST create exam
 router.post('/', async (req, res) => {
   try {
+    // Convert datetime-local to UTC for storage
+    const openTime = req.body.openTime ? new Date(req.body.openTime + 'Z') : null;
+
     let closeTime = null;
-    if (req.body.openTime && req.body.duration) {
-      closeTime = calculateCloseTime(req.body.openTime, req.body.duration, req.body.bufferTime || 5);
+    if (openTime && req.body.duration) {
+      closeTime = calculateCloseTime(openTime, req.body.duration, req.body.bufferTime || 5);
     }
 
     const examData = {
       ...req.body,
+      openTime,
       closeTime,
       maxAttempts: 1,
       status: 'draft',
@@ -775,7 +779,7 @@ router.put('/:id', async (req, res) => {
     }
 
     let closeTime = exam.closeTime;
-    const newOpenTime = req.body.openTime ? new Date(req.body.openTime) : exam.openTime;
+    const newOpenTime = req.body.openTime ? new Date(req.body.openTime + 'Z') : exam.openTime;
     const newDuration = req.body.duration || exam.duration;
     const newBufferTime = req.body.bufferTime !== undefined ? req.body.bufferTime : exam.bufferTime || 5;
 
