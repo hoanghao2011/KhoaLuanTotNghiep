@@ -31,7 +31,10 @@ const ExamReview = () => {
       }
     };
 
-    const storedHistory = JSON.parse(localStorage.getItem(`exam-${examId}-history`) || "[]");
+    // Lấy userId từ localStorage để tách biệt dữ liệu của các user khác nhau
+    const userId = localStorage.getItem("userId");
+    const storageKey = userId ? `exam-${examId}-user${userId}-history` : `exam-${examId}-history`;
+    const storedHistory = JSON.parse(localStorage.getItem(storageKey) || "[]");
     setHistory(storedHistory);
     if (storedHistory.length > 0) {
       setSelectedAttempt(storedHistory[storedHistory.length - 1]);

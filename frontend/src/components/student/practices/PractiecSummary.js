@@ -46,14 +46,21 @@ const handleConfirmSubmit = () => {
     duration,
   };
 
-  const history = JSON.parse(localStorage.getItem(`exam-${examId}-history`)) || [];
+  // Lấy userId để tách biệt dữ liệu của các user khác nhau
+  const userId = localStorage.getItem("userId");
+  const storageKey = userId ? `exam-${examId}-user${userId}-history` : `exam-${examId}-history`;
+  const history = JSON.parse(localStorage.getItem(storageKey)) || [];
   history.push(attempt);
-  localStorage.setItem(`exam-${examId}-history`, JSON.stringify(history));
+  localStorage.setItem(storageKey, JSON.stringify(history));
 
   // --- Reset bài làm & timer ---
-  localStorage.removeItem(`exam-${examId}-answers`);
-  localStorage.removeItem(`exam-${examId}-seconds`);
-  localStorage.removeItem(`exam-${examId}-endTime`);
+  const answerKey = userId ? `exam-${examId}-user${userId}-answers` : `exam-${examId}-answers`;
+  const secondsKey = userId ? `exam-${examId}-user${userId}-seconds` : `exam-${examId}-seconds`;
+  const endTimeKey = userId ? `exam-${examId}-user${userId}-endTime` : `exam-${examId}-endTime`;
+
+  localStorage.removeItem(answerKey);
+  localStorage.removeItem(secondsKey);
+  localStorage.removeItem(endTimeKey);
 
   setShowConfirmModal(false);
   navigate(`/exam-review/${examId}`);
