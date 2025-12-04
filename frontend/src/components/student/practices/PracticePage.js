@@ -18,9 +18,14 @@ function ExamPage() {
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
 
+  // Lấy userId từ current user (app_user) để tách biệt dữ liệu của các user khác nhau
+  const currentUser = JSON.parse(localStorage.getItem("app_user") || "{}");
+  const userId = currentUser._id;
+
   const QUESTIONS_PER_PAGE = 3;
 const [seconds, setSeconds] = useState(() => {
-  return Number(localStorage.getItem(`exam-${examId}-seconds`)) || 0;
+  const secondsKey = userId ? `exam-${examId}-user${userId}-seconds` : `exam-${examId}-seconds`;
+  return Number(localStorage.getItem(secondsKey)) || 0;
 });
 
   const [isTimerRunning, setIsTimerRunning] = useState(true);
@@ -29,13 +34,14 @@ const [seconds, setSeconds] = useState(() => {
   const timer = setInterval(() => {
     setSeconds((prev) => {
       const newVal = prev + 1;
-      localStorage.setItem(`exam-${examId}-seconds`, newVal);
+      const secondsKey = userId ? `exam-${examId}-user${userId}-seconds` : `exam-${examId}-seconds`;
+      localStorage.setItem(secondsKey, newVal);
       return newVal;
     });
   }, 1000);
 
   return () => clearInterval(timer);
-}, []);
+}, [examId, userId]);
 
 
   // Fetch exam details
@@ -70,13 +76,15 @@ const [seconds, setSeconds] = useState(() => {
   const handleAnswerChange = (questionId, answerIndex) => {
     const newAnswers = { ...answers, [questionId]: answerIndex };
     setAnswers(newAnswers);
-    localStorage.setItem(`exam-${examId}-answers`, JSON.stringify(newAnswers));
+    const answerKey = userId ? `exam-${examId}-user${userId}-answers` : `exam-${examId}-answers`;
+    localStorage.setItem(answerKey, JSON.stringify(newAnswers));
   };
 
   useEffect(() => {
-    const savedAnswers = JSON.parse(localStorage.getItem(`exam-${examId}-answers`));
+    const answerKey = userId ? `exam-${examId}-user${userId}-answers` : `exam-${examId}-answers`;
+    const savedAnswers = JSON.parse(localStorage.getItem(answerKey));
     if (savedAnswers) setAnswers(savedAnswers);
-  }, [examId]);
+  }, [examId, userId]);
 
   const handleQuestionClick = (index) => {
     const targetPage = Math.floor(index / QUESTIONS_PER_PAGE);
@@ -123,13 +131,16 @@ const handleSubmitExam = () => {
     seconds,
   };
 
-  const history = JSON.parse(localStorage.getItem(`exam-${examId}-history`) || "[]");
+  const storageKey = userId ? `exam-${examId}-user${userId}-history` : `exam-${examId}-history`;
+  const history = JSON.parse(localStorage.getItem(storageKey) || "[]");
   history.push(attempt);
-  localStorage.setItem(`exam-${examId}-history`, JSON.stringify(history));
+  localStorage.setItem(storageKey, JSON.stringify(history));
 
   // --- Reset ---
-  localStorage.removeItem(`exam-${examId}-answers`);
-  localStorage.removeItem(`exam-${examId}-seconds`); // xóa timer
+  const answerKey = userId ? `exam-${examId}-user${userId}-answers` : `exam-${examId}-answers`;
+  const secondsKey = userId ? `exam-${examId}-user${userId}-seconds` : `exam-${examId}-seconds`;
+  localStorage.removeItem(answerKey);
+  localStorage.removeItem(secondsKey); // xóa timer
   setSeconds(0); // reset state timer
 
   navigate(`/exam-review/${examId}`);
