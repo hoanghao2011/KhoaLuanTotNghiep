@@ -738,7 +738,9 @@ router.post('/', async (req, res) => {
     const exam = new Exam(examData);
     await exam.save();
     console.log(`✅ Exam created: ${exam.title} (status=draft)`);
-    console.log(`   openTime: ${exam.openTime}, closeTime: ${exam.closeTime}`);
+    console.log(`   openTime (raw): ${exam.openTime}`);
+    console.log(`   openTime (ISO): ${exam.openTime ? exam.openTime.toISOString() : 'null'}`);
+    console.log(`   closeTime: ${exam.closeTime}`);
     console.log(`   duration: ${exam.duration} phút + bufferTime: ${exam.bufferTime} phút`);
     res.status(201).json(exam);
   } catch (err) {
@@ -759,6 +761,10 @@ router.get('/:id', async (req, res) => {
         populate: { path: 'categoryId', select: 'name _id' }
       });
     if (!exam) return res.status(404).json({ message: 'Exam not found' });
+
+    console.log(`📋 GET exam ${req.params.id}:`);
+    console.log(`   openTime (DB): ${exam.openTime}`);
+    console.log(`   openTime (ISO): ${exam.openTime ? exam.openTime.toISOString() : 'null'}`);
 
     // ✅ NEW: Ensure virtuals are included (imageUrl)
     res.json(exam.toObject ? exam.toObject({ virtuals: true }) : exam);

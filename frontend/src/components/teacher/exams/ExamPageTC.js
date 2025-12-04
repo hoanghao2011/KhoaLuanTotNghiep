@@ -399,6 +399,10 @@ const loadExams = async () => {
       if (!res.ok) throw new Error("Không thể tải đề");
       const data = await res.json();
 
+      console.log("📋 Exam data from server:", data);
+      console.log("⏰ openTime from server:", data.openTime);
+      console.log("📝 getLocalDateTime result:", getLocalDateTime(data.openTime));
+
       setExamName(data.title);
       setSelectedSubject(data.subject._id);
       setSelectedCategories(data.categories.map(c => c._id));
