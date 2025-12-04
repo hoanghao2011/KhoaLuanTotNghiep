@@ -26,6 +26,14 @@ const calculateCloseTime = (openTime, duration, bufferTime = 5) => {
   return close;
 };
 
+// Helper: Parse datetime-local string (without timezone) as UTC
+// Input: "2025-01-15T12:30" -> Output: Date object representing 2025-01-15T12:30Z
+const parseLocalTimeAsUTC = (dateTimeString) => {
+  if (!dateTimeString) return null;
+  // Append 'Z' to treat local datetime as UTC
+  return new Date(dateTimeString + 'Z');
+};
+
 // ✅ HELPER: Kiểm tra đề có được phép chỉnh sửa không (draft + chưa tới openTime)
 const canEditExam = (exam) => {
   // ✅ Nếu đã publish → không thể sửa
@@ -711,12 +719,16 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     // Convert datetime-local to UTC for storage
-    const openTime = req.body.openTime ? new Date(req.body.openTime + 'Z') : null;
+    const openTime = parseLocalTimeAsUTC(req.body.openTime);
 
     let closeTime = null;
     if (openTime && req.body.duration) {
       closeTime = calculateCloseTime(openTime, req.body.duration, req.body.bufferTime || 5);
     }
+
+    console.log(`📝 Creating exam with openTime: "${req.body.openTime}"`);
+    console.log(`   Parsed as UTC: ${openTime}`);
+    console.log(`   ISO format: ${openTime ? openTime.toISOString() : 'null'}`);
 
     const examData = {
       ...req.body,
@@ -779,9 +791,13 @@ router.put('/:id', async (req, res) => {
     }
 
     let closeTime = exam.closeTime;
-    const newOpenTime = req.body.openTime ? new Date(req.body.openTime + 'Z') : exam.openTime;
+    const newOpenTime = parseLocalTimeAsUTC(req.body.openTime) || exam.openTime;
     const newDuration = req.body.duration || exam.duration;
     const newBufferTime = req.body.bufferTime !== undefined ? req.body.bufferTime : exam.bufferTime || 5;
+
+    console.log(`✏️ Updating exam with openTime: "${req.body.openTime}"`);
+    console.log(`   Parsed as UTC: ${newOpenTime}`);
+    console.log(`   ISO format: ${newOpenTime ? newOpenTime.toISOString() : 'null'}`);
 
     if (newOpenTime || newDuration) {
       closeTime = calculateCloseTime(newOpenTime, newDuration, newBufferTime);

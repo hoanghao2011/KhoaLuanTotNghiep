@@ -301,6 +301,11 @@ const loadExams = async () => {
       createdBy: currentUser._id // ✅ THÊM: Gửi ID giáo viên tạo đề
     };
 
+    console.log("📤 Sending exam data to backend:");
+    console.log("   openTime value:", openTime);
+    console.log("   openTime type:", typeof openTime);
+    console.log("   Full examData:", examData);
+
     setLoading(true);
     try {
       if (isEditMode) {
