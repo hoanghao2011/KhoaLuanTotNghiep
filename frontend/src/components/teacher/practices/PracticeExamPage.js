@@ -227,12 +227,12 @@ const handleSaveExam = async () => {
     return;
   }
 
-  // Hàm để chuyển đổi thời gian từ local (UTC+7) sang UTC
-  const convertLocalToUTC = (localTimeStr) => {
+  // Hàm để chuyển đổi thời gian từ datetime-local (UTC) sang UTC+7 để lưu đúng giờ Việt Nam
+  const convertLocalToServer = (localTimeStr) => {
     if (!localTimeStr) return null;
     const date = new Date(localTimeStr);
-    // Trừ 7 giờ để lấy thời gian UTC (Việt Nam là UTC+7)
-    return new Date(date.getTime() - 7 * 60 * 60 * 1000).toISOString();
+    // datetime-local trả về UTC, cộng 7 giờ để lấy giờ Việt Nam (UTC+7)
+    return new Date(date.getTime() + 7 * 60 * 60 * 1000).toISOString();
   };
 
   const examData = {
@@ -241,8 +241,8 @@ const handleSaveExam = async () => {
     categories: selectedCategories,
     classes: selectedClasses, // Mảng các lớp được chọn
     teacherId: currentUser._id, // Thêm dòng này
-    openTime: convertLocalToUTC(openTime),
-    closeTime: convertLocalToUTC(closeTime),
+    openTime: convertLocalToServer(openTime),
+    closeTime: convertLocalToServer(closeTime),
   };
 
   try {
@@ -292,12 +292,12 @@ const handleSaveExam = async () => {
 
       const data = await res.json();
 
-      // Hàm để chuyển đổi từ UTC sang local time (UTC+7)
-      const convertUTCToLocal = (utcTimeStr) => {
-        if (!utcTimeStr) return "";
-        const date = new Date(utcTimeStr);
-        // Cộng 7 giờ để lấy thời gian local (Việt Nam là UTC+7)
-        const localDate = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+      // Hàm để chuyển đổi từ server time (UTC+7) sang datetime-local (UTC)
+      const convertServerToLocal = (serverTimeStr) => {
+        if (!serverTimeStr) return "";
+        const date = new Date(serverTimeStr);
+        // Server lưu giờ Việt Nam (UTC+7), trừ 7 giờ để đưa về UTC cho datetime-local
+        const localDate = new Date(date.getTime() - 7 * 60 * 60 * 1000);
         return localDate.toISOString().slice(0, 16);
       };
 
@@ -306,8 +306,8 @@ const handleSaveExam = async () => {
       setExamName(data.title);
       setSelectedSubject(data.subject._id);
       setSelectedCategories(data.categories.map(c => c._id));
-      setOpenTime(convertUTCToLocal(data.openTime));
-      setCloseTime(convertUTCToLocal(data.closeTime));
+      setOpenTime(convertServerToLocal(data.openTime));
+      setCloseTime(convertServerToLocal(data.closeTime));
 
       setIsModalOpen(true);
     } catch (error) {
