@@ -37,6 +37,7 @@ router.get("/teacher/:teacherId", async (req, res) => {
     })
       .populate("subject", "name")
       .populate("class", "className")
+      .populate("semester", "_id name")
       .sort({ createdAt: -1 });
 
     res.json(assignments);
