@@ -119,7 +119,9 @@ const PersonalStats = ({ examId, questions, history, onViewDetails }) => {
           afterLabel: (context) => {
             const qId = Object.keys(stats.questionStats)[context.dataIndex];
             const q = stats.questionStats[qId].question;
-            return `Câu: ${q.title}`;
+            // Xóa HTML tags để chỉ hiển thị text
+            const plainText = q.title ? q.title.replace(/<[^>]*>/g, '') : '';
+            return `Câu: ${plainText}`;
           },
         },
       },
