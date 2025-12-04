@@ -227,22 +227,14 @@ const handleSaveExam = async () => {
     return;
   }
 
-  // Hàm để chuyển đổi thời gian từ datetime-local (UTC) sang UTC+7 để lưu đúng giờ Việt Nam
-  const convertLocalToServer = (localTimeStr) => {
-    if (!localTimeStr) return null;
-    const date = new Date(localTimeStr);
-    // datetime-local trả về UTC, cộng 7 giờ để lấy giờ Việt Nam (UTC+7)
-    return new Date(date.getTime() + 7 * 60 * 60 * 1000).toISOString();
-  };
-
   const examData = {
     title: examName.trim(),
     subject: selectedSubject,
     categories: selectedCategories,
     classes: selectedClasses, // Mảng các lớp được chọn
     teacherId: currentUser._id, // Thêm dòng này
-    openTime: convertLocalToServer(openTime),
-    closeTime: convertLocalToServer(closeTime),
+    openTime: openTime ? openTime + ":00" : null, // datetime-local không có giây, thêm :00
+    closeTime: closeTime ? closeTime + ":00" : null,
   };
 
   try {
@@ -292,13 +284,13 @@ const handleSaveExam = async () => {
 
       const data = await res.json();
 
-      // Hàm để chuyển đổi từ server time (UTC+7) sang datetime-local (UTC)
-      const convertServerToLocal = (serverTimeStr) => {
-        if (!serverTimeStr) return "";
-        const date = new Date(serverTimeStr);
-        // Server lưu giờ Việt Nam (UTC+7), trừ 7 giờ để đưa về UTC cho datetime-local
-        const localDate = new Date(date.getTime() - 7 * 60 * 60 * 1000);
-        return localDate.toISOString().slice(0, 16);
+      // Server stores time in UTC, need to add 7 hours to display Vietnam time
+      const formatToLocalDateTime = (utcTimeStr) => {
+        if (!utcTimeStr) return "";
+        const date = new Date(utcTimeStr);
+        // Add 7 hours to convert from UTC back to Vietnam display time
+        const vietnamDate = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+        return vietnamDate.toISOString().slice(0, 16);
       };
 
       setIsEditMode(true);
@@ -306,8 +298,8 @@ const handleSaveExam = async () => {
       setExamName(data.title);
       setSelectedSubject(data.subject._id);
       setSelectedCategories(data.categories.map(c => c._id));
-      setOpenTime(convertServerToLocal(data.openTime));
-      setCloseTime(convertServerToLocal(data.closeTime));
+      setOpenTime(formatToLocalDateTime(data.openTime));
+      setCloseTime(formatToLocalDateTime(data.closeTime));
 
       setIsModalOpen(true);
     } catch (error) {

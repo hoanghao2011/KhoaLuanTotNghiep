@@ -344,6 +344,16 @@ router.post("/", async (req, res) => {
       return res.status(403).json({ error: "Bạn không được phân công dạy môn này cho tất cả các lớp đã chọn" });
     }
 
+    // Parse time string and adjust for Vietnam timezone (UTC+7)
+    const parseVietnamTime = (timeStr) => {
+      if (!timeStr) return null;
+      // timeStr format: "2025-01-15T12:22" or "2025-01-15T12:22:00"
+      const date = new Date(timeStr);
+      // Subtract 7 hours to convert from local display time to UTC
+      // (because JavaScript Date treats input as UTC by default)
+      return new Date(date.getTime() - 7 * 60 * 60 * 1000);
+    };
+
     const examData = {
       title: title.trim(),
       subject: new mongoose.Types.ObjectId(subject),
@@ -354,8 +364,8 @@ router.post("/", async (req, res) => {
       duration: parseInt(duration) || 60,
       attempts: parseInt(attempts) || 1,
       scorePerQuestion: parseFloat(scorePerQuestion) || 1,
-      openTime: openTime ? new Date(openTime) : null,
-      closeTime: closeTime ? new Date(closeTime) : null,
+      openTime: parseVietnamTime(openTime),
+      closeTime: parseVietnamTime(closeTime),
     };
 
     const newExam = new PracticeExam(examData);
@@ -410,6 +420,14 @@ router.put("/:id", async (req, res) => {
     const exam = await PracticeExam.findById(req.params.id);
     if (!exam) return res.status(404).json({ error: "Exam not found" });
 
+    // Parse time string and adjust for Vietnam timezone (UTC+7)
+    const parseVietnamTime = (timeStr) => {
+      if (!timeStr) return null;
+      const date = new Date(timeStr);
+      // Subtract 7 hours to convert from local display time to UTC
+      return new Date(date.getTime() - 7 * 60 * 60 * 1000);
+    };
+
     const updateData = {
       title: req.body.title?.trim(),
       subject: req.body.subject ? new mongoose.Types.ObjectId(req.body.subject) : exam.subject,
@@ -419,8 +437,8 @@ router.put("/:id", async (req, res) => {
       scorePerQuestion: parseFloat(req.body.scorePerQuestion) || exam.scorePerQuestion,
     };
 
-    if (req.body.openTime?.trim()) updateData.openTime = new Date(req.body.openTime);
-    if (req.body.closeTime?.trim()) updateData.closeTime = new Date(req.body.closeTime);
+    if (req.body.openTime?.trim()) updateData.openTime = parseVietnamTime(req.body.openTime);
+    if (req.body.closeTime?.trim()) updateData.closeTime = parseVietnamTime(req.body.closeTime);
 
     const updatedExam = await PracticeExam.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true })
       .populate('subject', 'name')
