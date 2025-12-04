@@ -373,7 +373,7 @@ const loadExams = async () => {
     }
   };
 
-  const handleEditExam = (exam) => {
+  const handleEditExam = async (exam) => {
     // ✅ FIX: Kiểm tra canEdit - nếu false thì không vào modal
     if (!canEdit(exam)) {
       Swal.fire("Lỗi!", "Không thể chỉnh sửa đề thi này (bài đã hết hạn)", "error");
@@ -393,22 +393,31 @@ const loadExams = async () => {
       return `${year}-${month}-${day}T${hours}:${minutes}`;
     };
 
-    setExamName(exam.title);
-    setSelectedSubject(exam.subject._id);
-    setSelectedCategories(exam.categories.map(c => c._id));
-    setSelectedClass(exam.class?._id || "");
-    setDuration(exam.duration);
-    setBufferTime(exam.bufferTime || 5);
-    setOpenTime(getLocalDateTime(exam.openTime));
-    setShowResultImmediately(exam.showResultImmediately);
-    setShowCorrectAnswers(exam.showCorrectAnswers);
+    try {
+      // Fetch chi tiết exam để đảm bảo dữ liệu đúng (giống như PracticeExamPage)
+      const res = await fetch(`${API_URL}/test-exams/${exam._id}`);
+      if (!res.ok) throw new Error("Không thể tải đề");
+      const data = await res.json();
 
-    // ✅ Set disabled fields dựa trên exam status
-    setDisabledFields(getDisabledFieldsForExam(exam));
+      setExamName(data.title);
+      setSelectedSubject(data.subject._id);
+      setSelectedCategories(data.categories.map(c => c._id));
+      setSelectedClass(data.class?._id || "");
+      setDuration(data.duration);
+      setBufferTime(data.bufferTime || 5);
+      setOpenTime(getLocalDateTime(data.openTime));
+      setShowResultImmediately(data.showResultImmediately);
+      setShowCorrectAnswers(data.showCorrectAnswers);
 
-    setIsEditMode(true);
-    setEditingExamId(exam._id);
-    setIsModalOpen(true);
+      // ✅ Set disabled fields dựa trên exam status
+      setDisabledFields(getDisabledFieldsForExam(data));
+
+      setIsEditMode(true);
+      setEditingExamId(data._id);
+      setIsModalOpen(true);
+    } catch (error) {
+      Swal.fire("Lỗi", "Không thể chỉnh sửa đề thi này", "error");
+    }
   };
 
   const getClassName = (classId) => {
