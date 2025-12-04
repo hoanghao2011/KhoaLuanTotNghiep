@@ -174,7 +174,12 @@ const PersonalStats = ({ examId, questions, history, onViewDetails }) => {
 
             <div className="modal-body">
               <p>
-                <strong>Câu hỏi:</strong> {selectedQuestion.title}
+                <strong>Câu hỏi:</strong>
+                {selectedQuestion.title && selectedQuestion.title.includes('<') ? (
+                  <div dangerouslySetInnerHTML={{ __html: selectedQuestion.title }} style={{ display: 'inline' }} />
+                ) : (
+                  selectedQuestion.title
+                )}
               </p>
 
               <div className="modal-options">
