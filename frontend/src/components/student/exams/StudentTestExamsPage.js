@@ -159,13 +159,14 @@ function StudentTestExamsPage({ studentUsername }) {
 
   const formatDateTime = (str) => {
     if (!str) return "Chưa đặt";
-    const d = new Date(str);
-    return `${d.getDate().toString().padStart(2, "0")}/${(d.getMonth() + 1)
-      .toString()
-      .padStart(2, "0")}/${d.getFullYear()} ${d.getHours().toString().padStart(2, "0")}:${d
-      .getMinutes()
-      .toString()
-      .padStart(2, "0")}`;
+    // IMPORTANT: Don't use getHours() - it returns local browser time!
+    // Extract UTC components from ISO string instead
+    const date = new Date(str);
+    const isoString = date.toISOString(); // e.g., "2025-12-04T01:00:00.000Z"
+    const [datePart, timePart] = isoString.split('T'); // ["2025-12-04", "01:00:00.000Z"]
+    const [year, month, day] = datePart.split('-');
+    const [hours, minutes] = timePart.split(':');
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 
   const handleStartExam = (exam) => {
