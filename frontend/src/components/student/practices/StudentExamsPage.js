@@ -101,7 +101,8 @@ function StudentExamsPage({ studentUsername }) {
         <div className="exam-list">
           {exams
             .filter((exam) => {
-              const now = new Date();
+              // Get current UTC time to match server time
+              const now = new Date(new Date().toISOString());
               const close = exam.closeTime ? new Date(exam.closeTime) : null;
               return !close || now <= close;
             })
