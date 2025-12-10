@@ -24,7 +24,12 @@
   color: #fff;
   line-height: 1.4;
 }
-
+.sidebar li.active {
+  background: #74c0fc !important;
+  color: #1e1e2f !important;
+  font-weight: 700;
+  transform: translateX(6px);
+}
 .title-role {
   font-size: 22px;
   font-weight: 600;
@@ -35,21 +40,21 @@
   margin-top: 10px;
   display: flex;
   justify-content: center;
-    width: 230px;     /* ↓ avatar nhỏ lại */
+    width: 230px;
   height: 80px;
 }
 
 .user-avatar {
-  width: 20px;     /* ↓ avatar nhỏ lại */
-  height: 20px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid #74c0fc;
 }
 
 .avatar-placeholder {
-  width: 20px;     /* ↓ placeholder avatar nhỏ lại */
-  height: 20px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
   background: #4dabf7;
   display: flex;

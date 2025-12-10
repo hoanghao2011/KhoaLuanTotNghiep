@@ -59,8 +59,6 @@ router.post('/upload-avatar', upload.single('file'), async (req, res) => {
   }
 });
 
-// Các route khác giữ nguyên...
-
 router.get("/", async (req, res) => {
   try {
     const users = await User.find().select("-password");

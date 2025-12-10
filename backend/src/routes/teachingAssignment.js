@@ -12,6 +12,7 @@ router.get("/", async (req, res) => {
     const assignments = await TeachingAssignment.find()
       .populate("teacher", "name username")
       .populate("subject", "name")
+      .populate("semester", "name isActive")
       // .populate("class", "className");
       .populate({
   path: "class",
@@ -48,24 +49,26 @@ router.get("/teacher/:teacherId", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const { teacher, subject, classId } = req.body;
+    const { teacher, subject, classId, semester: requestedSemester } = req.body; // Nhận semester từ body
 
-    const [t, s, activeSemester] = await Promise.all([
+    const [t, s] = await Promise.all([
       User.findOne({ _id: teacher, role: "teacher" }),
       Subject.findById(subject),
-      axios.get("http://localhost:5000/api/semesters/active").then(r => r.data), // LẤY HỌC KỲ HIỆN TẠI
     ]);
 
     if (!t) return res.status(400).json({ message: "Giáo viên không hợp lệ" });
     if (!s) return res.status(400).json({ message: "Môn học không tồn tại" });
-    if (!activeSemester) return res.status(400).json({ message: "Chưa có học kỳ hiện tại!" });
 
-    // Đồng bộ Class nếu có
-    if (classId) {
-      await Class.findByIdAndUpdate(classId, { teacher, subject });
+    let semesterId = requestedSemester;
+
+    if (!semesterId) {
+      const activeSemester = await axios.get("http://localhost:5000/api/semesters/active").then(r => r.data);
+      if (!activeSemester) return res.status(400).json({ message: "Chưa có học kỳ hiện tại!" });
+      semesterId = activeSemester._id;
     }
 
-    const query = { teacher, subject, semester: activeSemester._id };
+    // Kiểm tra trùng phân công
+    const query = { teacher, subject, semester: semesterId };
     if (classId !== undefined) query.class = classId || null;
 
     const existing = await TeachingAssignment.findOne(query);
@@ -81,7 +84,7 @@ router.post("/", async (req, res) => {
       teacher,
       subject,
       class: classId || null,
-      semester: activeSemester._id, // THÊM DÒNG QUAN TRỌNG NÀY!
+      semester: semesterId, // DÙNG ĐÚNG HỌC KỲ ĐƯỢC TRUYỀN VÀO HOẶC ACTIVE
     });
 
     const saved = await assignment.save();
@@ -89,7 +92,8 @@ router.post("/", async (req, res) => {
       .populate("teacher", "name username")
       .populate("subject", "name")
       .populate("class", "className")
-      .populate("semester", "name");
+      .populate("semester", "name isActive");
+
     res.status(201).json(populated);
   } catch (err) {
     console.error("Lỗi tạo phân công:", err);

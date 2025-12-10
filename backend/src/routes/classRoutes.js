@@ -195,6 +195,12 @@ router.put("/:id", async (req, res) => {
     // === XỬ LÝ SINH VIÊN + KIỂM TRA TRÙNG MÔN ===
     if (students !== undefined) {
       const newStudentIds = Array.isArray(students) ? students.map(s => s.toString()) : [];
+      
+      if (newStudentIds.length > classItem.maxStudents) {
+        return res.status(400).json({
+          message: `Lớp chỉ cho phép tối đa ${classItem.maxStudents} học sinh (đã có ${classItem.students.length})`
+        });
+      }
       const oldStudentIds = classItem.students.map(s => s.toString());
       const added = newStudentIds.filter(id => !oldStudentIds.includes(id));
 
@@ -277,8 +283,8 @@ router.delete("/:id", async (req, res) => {
     if (!deleted) return res.status(404).json({ message: "Không tìm thấy lớp" });
 
 await User.updateMany(
-  { className: deleted._id.toString() },
-  { className: "" }
+  { className: deleted.className },
+  { $unset: { className: 1 } }
 );
     
     await TeachingAssignment.deleteMany({ class: req.params.id });

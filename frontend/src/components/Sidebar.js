@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import "../styles/Sidebar.css";
+import { useNavigate, useLocation } from "react-router-dom";
 
 function Sidebar({ user, onLogout }) {
   const navigate = useNavigate();
@@ -13,6 +13,7 @@ function Sidebar({ user, onLogout }) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const location = useLocation();
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
@@ -107,27 +108,27 @@ function Sidebar({ user, onLogout }) {
         <ul>
           {currentUser?.role === "teacher" && (
             <>
-              <li onClick={() => navigate("/categories")}>Tạo danh mục</li>
-              <li onClick={() => navigate("/practice-exam")}>Tạo đề luyện tập</li>
-              <li onClick={() => navigate("/test-exam")}>Tạo đề kiểm tra</li>
-              <li onClick={() => navigate("/reports")}>Thống kê & báo cáo</li>
-              <li onClick={() => navigate("/profile")}>Hồ sơ cá nhân</li>
+              <li onClick={() => navigate("/categories")} className={location.pathname === "/categories" ? "active" : ""}>Tạo danh mục</li>              
+              <li onClick={() => navigate("/practice-exam")} className={location.pathname === "/practice-exam" ? "active" : ""}>Tạo đề luyện tập</li>
+              <li onClick={() => navigate("/test-exam")} className={location.pathname === "/test-exam" ? "active" : ""}>Tạo đề kiểm tra</li>
+              <li onClick={() => navigate("/reports")} className={location.pathname === "/reports" ? "active" : ""}>Thống kê & báo cáo</li>
+              <li onClick={() => navigate("/profile")} className={location.pathname === "/profile" ? "active" : ""}>Hồ sơ cá nhân</li>
             </>
           )}
           {currentUser?.role === "student" && (
             <>
-              <li onClick={() => navigate("/student")}>Trang học viên</li>
-              <li onClick={() => navigate("/myExams")}>Bài luyện tập</li>
-              <li onClick={() => navigate("/myTest")}>Bài kiểm tra</li>
+              <li onClick={() => navigate("/student")} className={location.pathname === "/student" ? "active" : ""}>Trang học viên</li>
+              <li onClick={() => navigate("/myExams")} className={location.pathname === "/myExams" ? "active" : ""}>Bài luyện tập</li>
+              <li onClick={() => navigate("/myTest")} className={location.pathname === "/myTest" ? "active" : ""}>Bài kiểm tra</li>
             </>
           )}
           {currentUser?.role === "admin" && (
             <>
-              <li onClick={() => navigate("/admin/classes")}>Quản lý lớp học</li>
-              <li onClick={() => navigate("/admin/teachers")}>Quản lý giảng viên</li>
-              <li onClick={() => navigate("/admin/students")}>Quản lý sinh viên</li>
-              <li onClick={() => navigate("/admin/subjects")}>Quản lý môn học</li>
-              <li onClick={() => navigate("/admin/semesters")}>Quản lý học kỳ</li>
+              <li onClick={() => navigate("/admin/semesters")} className={location.pathname === "/admin/semesters" ? "active" : ""}>Quản lý học kỳ</li>
+              <li onClick={() => navigate("/admin/subjects")} className={location.pathname === "/admin/subjects" ? "active" : ""}>Quản lý môn học</li>
+              <li onClick={() => navigate("/admin/students")} className={location.pathname === "/admin/students" ? "active" : ""}>Quản lý sinh viên</li>
+              <li onClick={() => navigate("/admin/teachers")} className={location.pathname === "/admin/teachers" ? "active" : ""}>Quản lý giảng viên</li>
+              <li onClick={() => navigate("/admin/classes")} className={location.pathname === "/admin/classes" ? "active" : ""}>Quản lý lớp học</li>
             </>
           )}
         </ul>

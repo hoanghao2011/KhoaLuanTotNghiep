@@ -30,9 +30,12 @@ function AdminManagerClass() {
 const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 const [classToDelete, setClassToDelete] = useState(null);
 const [hasPracticeExam, setHasPracticeExam] = useState(false);
-
+const [selectedSemesterView, setSelectedSemesterView] = useState("all");
   const [importPreview, setImportPreview] = useState([]);
   const fileInputExcelRef = useRef(null);
+
+  const [selectedSemesterForAdd, setSelectedSemesterForAdd] = useState("");
+
 
   const [conflictError, setConflictError] = useState("");
 const [notifyModal, setNotifyModal] = useState({
@@ -56,7 +59,7 @@ const showNotify = (message, type = "error") => {
       const [classRes, userRes, subjectRes, assignRes, semesterRes] = await Promise.all([
         axios.get(`${API_BASE}/classes`),
         axios.get(`${API_BASE}/users`),
-        axios.get(`${API_BASE}/subjects`),
+        axios(`${API_BASE}/subjects/all`),
         axios.get(`${API_BASE}/teaching-assignments`),
         axios.get(`${API_BASE}/semesters`),
       ]);
@@ -111,7 +114,7 @@ if (!newClassName.trim()) {
     message: "Nhập tên lớp!"
   });
 }    if (!selectedSubject) return alert("Chọn môn học!");
-    if (!selectedSemester) return alert("Chọn học kỳ!");
+    if (!selectedSemesterForAdd) return alert("Chọn học kỳ!");
     if (!selectedTeacher) return alert("Chọn giảng viên!");
     if (!maxStudents || maxStudents <= 0) return alert("Nhập số lượng SV hợp lệ!");
 
@@ -120,7 +123,7 @@ if (!newClassName.trim()) {
         className: newClassName.trim(),
         subject: selectedSubject,
         teacher: selectedTeacher,
-        semester: selectedSemester,
+        semester: selectedSemesterForAdd,
         maxStudents: Number(maxStudents),
       });
       fetchAllData();
@@ -139,6 +142,7 @@ setNotifyModal({
     setNewClassName("");
     setSelectedSubject("");
     setSelectedTeacher("");
+    setSelectedSemesterForAdd("");
     setSelectedSemester(activeSemesterId);
     setMaxStudents("");
     setShowAddClassModal(false);
@@ -263,55 +267,62 @@ const getSortArrow = (key) => {
   return sortConfig.direction === "asc" ? "▲" : "▼";
 };
 
-  // Filter + Sort classes
-  const filteredClasses = useMemo(() => {
-    const term = normalizeString(searchTerm);
+const filteredClasses = useMemo(() => {
+  let result = classes;
 
-    return classes
-      .filter((cls) => {
-        const className = normalizeString(cls.className);
-        const subjectName = normalizeString(
-          subjects.find((s) => s._id === (cls.subject?._id || cls.subject))?.name || ""
-        );
-        const teacherName = normalizeString(
-          users.find((u) => u._id === (cls.teacher?._id || cls.teacher))?.name || ""
-        );
-        const semesterName = normalizeString(
-          semesters.find((s) => s._id === (cls.semester?._id || cls.semester))?.name || ""
-        );
+  if (selectedSemesterView !== "all") {
+    result = result.filter(cls => 
+      cls.semester?._id === selectedSemesterView || cls.semester === selectedSemesterView
+    );
+  }
 
-        if (filterBy === "className") return className.includes(term);
-        if (filterBy === "subject") return subjectName.includes(term);
-        if (filterBy === "teacher") return teacherName.includes(term);
-        if (filterBy === "semester") return semesterName.includes(term);
-        return className.includes(term) || subjectName.includes(term) || teacherName.includes(term) || semesterName.includes(term);
-      })
-      .sort((a, b) => {
-        if (!sortConfig.key) return 0;
-        let aVal = "", bVal = "";
+  const term = normalizeString(searchTerm);
 
-        if (sortConfig.key === "className") {
-          aVal = normalizeString(a.className);
-          bVal = normalizeString(b.className);
-        } else if (sortConfig.key === "subject") {
-          aVal = normalizeString(subjects.find((s) => s._id === (a.subject?._id || a.subject))?.name || "");
-          bVal = normalizeString(subjects.find((s) => s._id === (b.subject?._id || b.subject))?.name || "");
-        } else if (sortConfig.key === "teacher") {
-          aVal = normalizeString(users.find((u) => u._id === (a.teacher?._id || a.teacher))?.name || "");
-          bVal = normalizeString(users.find((u) => u._id === (b.teacher?._id || b.teacher))?.name || "");
-        } else if (sortConfig.key === "semester") {
-          aVal = normalizeString(semesters.find((s) => s._id === (a.semester?._id || a.semester))?.name || "");
-          bVal = normalizeString(semesters.find((s) => s._id === (b.semester?._id || b.semester))?.name || "");
-        } else if (sortConfig.key === "students") {
-          aVal = a.students?.length || 0;
-          bVal = b.students?.length || 0;
-        }
+  return result
+    .filter((cls) => {
+      const className = normalizeString(cls.className);
+      const subjectName = normalizeString(
+        subjects.find((s) => s._id === (cls.subject?._id || cls.subject))?.name || ""
+      );
+      const teacherName = normalizeString(
+        users.find((u) => u._id === (cls.teacher?._id || cls.teacher))?.name || ""
+      );
+      const semesterName = normalizeString(
+        semesters.find((s) => s._id === (cls.semester?._id || cls.semester))?.name || ""
+      );
 
-        if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
-        if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
-        return 0;
-      });
-  }, [classes, subjects, users, semesters, searchTerm, filterBy, sortConfig]);
+      if (filterBy === "className") return className.includes(term);
+      if (filterBy === "subject") return subjectName.includes(term);
+      if (filterBy === "teacher") return teacherName.includes(term);
+      if (filterBy === "semester") return semesterName.includes(term);
+      return className.includes(term) || subjectName.includes(term) || teacherName.includes(term) || semesterName.includes(term);
+    })
+    .sort((a, b) => {
+      if (!sortConfig.key) return 0;
+      let aVal = "", bVal = "";
+
+      if (sortConfig.key === "className") {
+        aVal = normalizeString(a.className);
+        bVal = normalizeString(b.className);
+      } else if (sortConfig.key === "subject") {
+        aVal = normalizeString(subjects.find((s) => s._id === (a.subject?._id || a.subject))?.name || "");
+        bVal = normalizeString(subjects.find((s) => s._id === (b.subject?._id || b.subject))?.name || "");
+      } else if (sortConfig.key === "teacher") {
+        aVal = normalizeString(users.find((u) => u._id === (a.teacher?._id || a.teacher))?.name || "");
+        bVal = normalizeString(users.find((u) => u._id === (b.teacher?._id || b.teacher))?.name || "");
+      } else if (sortConfig.key === "semester") {
+        aVal = normalizeString(semesters.find((s) => s._id === (a.semester?._id || a.semester))?.name || "");
+        bVal = normalizeString(semesters.find((s) => s._id === (b.semester?._id || b.semester))?.name || "");
+      } else if (sortConfig.key === "students") {
+        aVal = a.students?.length || 0;
+        bVal = b.students?.length || 0;
+      }
+
+      if (aVal < bVal) return sortConfig.direction === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortConfig.direction === "asc" ? 1 : -1;
+      return 0;
+    });
+}, [classes, subjects, users, semesters, searchTerm, filterBy, sortConfig, selectedSemesterView]);
 
   const filteredStudents = useMemo(() => {
     const term = normalizeString(studentSearch);
@@ -442,13 +453,58 @@ if (merged.length > max) {
 
   return (
     <div className="admin-classes-container">
-      <h2>Quản lý lớp học</h2>
+<h2>Quản lý lớp học phần</h2>
 
-      <div className="add-class-section">
-        <button className="add-btn" onClick={() => { setSelectedSemester(activeSemesterId); setShowAddClassModal(true); }}>
-          Thêm lớp mới
-        </button>
-      </div>
+<div style={{ marginBottom: "25px" }}>
+  <div style={{
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "15px"
+  }}>
+    {/* Nút thêm lớp */}
+    <button 
+      className="add-btn" 
+      onClick={() => { 
+        setSelectedSemesterForAdd(activeSemesterId); 
+        setShowAddClassModal(true); 
+      }}
+    >
+      + Thêm lớp học phần mới
+    </button>
+
+    {/* Bộ lọc học kỳ – đẹp như bên giảng viên */}
+    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+      <span style={{ fontWeight: "600", color: "#333", whiteSpace: "nowrap" }}>
+        Xem học kỳ:
+      </span>
+      <select
+        value={selectedSemesterView}
+        onChange={(e) => setSelectedSemesterView(e.target.value)}
+        style={{
+          padding: "10px 14px",
+          borderRadius: "8px",
+          border: "1px solid #ccc",
+          fontSize: "16px",
+          minWidth: "280px",
+          backgroundColor: selectedSemesterView === "all" ? "#f0f8ff" : 
+                         semesters.find(s => s._id === selectedSemesterView)?.isActive ? "#e8f5e8" : "white",
+        }}
+      >
+        <option value="all">Tất cả học kỳ</option>
+        {semesters
+          .slice()
+          .sort((a, b) => a.name.localeCompare(b.name, "vi"))
+          .map((sem) => (
+            <option key={sem._id} value={sem._id}>
+              {sem.name} {sem.isActive && "(Kỳ hiện tại)"}
+            </option>
+          ))}
+      </select>
+    </div>
+  </div>
+</div>
 
       <div className="search-filter">
         <input
@@ -590,49 +646,134 @@ if (merged.length > max) {
 )}
 
 
-      {/* Modal thêm lớp */}
+ {/* ==================== MODAL THÊM LỚP  ==================== */}
 {showAddClassModal && (
   <div className="modal">
     <div className="modal-content" style={{ position: "relative" }}>
+      <button
+        onClick={resetAddModal}
+        style={{
+          position: "absolute",
+          top: "10px",
+          right: "15px",
+          background: "none",
+          border: "none",
+          fontSize: "24px",
+          cursor: "pointer",
+        }}
+      >
+        ×
+      </button>
 
-      <h3>Thêm lớp mới</h3>
+      <h3>Thêm lớp học phần mới</h3>
 
-            <input type="text" value={newClassName} onChange={(e) => setNewClassName(e.target.value)} placeholder="VD: Lớp KTPM17A" />
-            <select value={selectedSubject} onChange={(e) => { setSelectedSubject(e.target.value); setSelectedTeacher(""); }}>
-              <option value="">-- Chọn môn --</option>
-              {subjects.map((s) => (
-                <option key={s._id} value={s._id}>{s.name}</option>
-              ))}
-            </select>
+      {/* 1. CHỌN HỌC KỲ – SẮP XẾP A-Z */}
+      <label>Học kỳ <span style={{ color: "red" }}>*</span></label>
+      <select
+        value={selectedSemesterForAdd}
+        onChange={(e) => {
+          setSelectedSemesterForAdd(e.target.value);
+          setSelectedSubject(""); // reset môn + GV khi đổi kỳ
+          setSelectedTeacher("");
+        }}
+        style={{ marginBottom: "15px" }}
+      >
+        <option value="">-- Chọn học kỳ --</option>
+        {semesters
+          .slice()
+          .sort((a, b) => a.name.localeCompare(b.name, "vi")) // Sắp xếp A-Z
+          .map((sem) => (
+            <option key={sem._id} value={sem._id}>
+              {sem.name} {sem.isActive && "(Kỳ hiện tại)"}
+            </option>
+          ))}
+      </select>
 
-            <select value={selectedSemester} onChange={(e) => setSelectedSemester(e.target.value)}>
-              <option value="">-- Chọn học kỳ --</option>
-              {semesters.map((sem) => (
-                <option key={sem._id} value={sem._id}>
-                  {sem.name} {sem.isActive && "(Kỳ hiện tại)"}
-                </option>
-              ))}
-            </select>
+      {/* 2. CHỌN MÔN – CHỈ HIỆN MÔN CỦA HỌC KỲ ĐÃ CHỌN */}
+      <label>Môn học <span style={{ color: "red" }}>*</span></label>
+      <select
+        value={selectedSubject}
+        onChange={(e) => {
+          setSelectedSubject(e.target.value);
+          setSelectedTeacher(""); // reset GV khi đổi môn
+        }}
+        disabled={!selectedSemesterForAdd}
+        style={{ marginBottom: "15px" }}
+      >
+        <option value="">-- Chọn môn học --</option>
+        {subjects
+          .filter((s) => s.semester?._id === selectedSemesterForAdd)
+          .map((s) => (
+            <option key={s._id} value={s._id}>
+              {s.name}
+            </option>
+          ))}
+        {selectedSemesterForAdd && 
+         subjects.filter((s) => s.semester?._id === selectedSemesterForAdd).length === 0 && (
+          <option disabled>Không có môn nào trong học kỳ này</option>
+        )}
+      </select>
 
-            <select value={selectedTeacher} onChange={(e) => setSelectedTeacher(e.target.value)} disabled={!selectedSubject}>
-              <option value="">-- Chọn giảng viên --</option>
-              {getTeachersForSubject(selectedSubject).length > 0 ? (
-                getTeachersForSubject(selectedSubject).map((t) => (
-                  <option key={t._id} value={t._id}>{t.name}</option>
-                ))
-              ) : (
-                <option disabled>Không có GV dạy môn này</option>
-              )}
-            </select>
+      {/* 3. CHỌN GIẢNG VIÊN – CHỈ HIỆN NGƯỜI DẠY MÔN ĐÓ TRONG KỲ ĐÓ */}
+      <label>Giảng viên <span style={{ color: "red" }}>*</span></label>
+      <select
+        value={selectedTeacher}
+        onChange={(e) => setSelectedTeacher(e.target.value)}
+        disabled={!selectedSubject}
+      >
+        <option value="">-- Chọn giảng viên --</option>
+        {getTeachersForSubject(selectedSubject)
+          .filter(t => {
+            // Chỉ hiện GV có phân công môn này trong học kỳ đã chọn
+            return assignments.some((a) =>
+  a.teacher?._id === t._id &&
+  a.subject?._id === selectedSubject &&
+  a.semester?._id === selectedSemesterForAdd
+);
+          })
+          .map((t) => (
+            <option key={t._id} value={t._id}>
+              {t.name}
+            </option>
+          ))}
+        {selectedSubject && 
+         getTeachersForSubject(selectedSubject).filter(t => 
+           assignments.some((a) => a.teacher?._id === t._id && 
+                                a.subject?._id === selectedSubject && 
+                                a.semester?._id === selectedSemesterForAdd)
+         ).length === 0 && (
+          <option disabled>Không có GV nào dạy môn này trong học kỳ này</option>
+        )}
+      </select>
 
-            <input type="number" value={maxStudents} onChange={(e) => setMaxStudents(e.target.value)} placeholder="Số lượng SV tối đa" />
-            <div className="modal-actions">
-              <button onClick={handleAddClass}>Xác nhận</button>
-              <button onClick={resetAddModal}>Hủy</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <label>Tên lớp <span style={{ color: "red" }}>*</span></label>
+      <input
+        value={newClassName}
+        onChange={(e) => setNewClassName(e.target.value)}
+        placeholder="VD: KTPM01-K15"
+      />
+
+      <label>Sĩ số tối đa</label>
+      <input
+        type="number"
+        value={maxStudents}
+        onChange={(e) => setMaxStudents(e.target.value)}
+        placeholder="VD: 60"
+        min="1"
+      />
+
+      <div className="modal-actions">
+        <button 
+          onClick={handleAddClass}
+          disabled={!selectedSemesterForAdd || !selectedSubject || !selectedTeacher || !newClassName.trim()}
+        >
+          Tạo lớp
+        </button>
+        <button onClick={resetAddModal}>Hủy</button>
+      </div>
+    </div>
+  </div>
+)}
 
       {/* Modal phân SV */}
 {showStudentModal && (
