@@ -147,7 +147,8 @@ function StudentTestExamsPage({ studentUsername }) {
   }, [attemptedExams]);
 
   const getExamStatus = (exam) => {
-    const now = new Date();
+    // Get current UTC time from ISO string to match server time
+    const now = new Date(new Date().toISOString());
     const open = exam.openTime ? new Date(exam.openTime) : null;
     const close = exam.closeTime ? new Date(exam.closeTime) : null;
 
