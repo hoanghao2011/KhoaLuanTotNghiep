@@ -405,11 +405,16 @@ router.post("/", async (req, res) => {
       return res.status(403).json({ error: "Bạn không được phân công dạy môn này cho tất cả các lớp đã chọn" });
     }
 
-    // Store Vietnam time directly in database (no UTC conversion)
-    // datetime-local input is already in Vietnam time, just parse as-is
-    const storeVietnamTime = (localDateTime) => {
+    // Convert datetime-local (Vietnam time) to UTC for database storage
+    // datetime-local input "22:20" is Vietnam time (UTC+7)
+    // Convert to UTC by subtracting 7 hours so database stores correct UTC value
+    const convertVietnamToUTC = (localDateTime) => {
       if (!localDateTime) return null;
-      return new Date(localDateTime);
+      // Parse the datetime string and add 7 hours to convert Vietnam local to UTC
+      // Example: "2025-12-10T22:20" (Vietnam) = "2025-12-10T15:20Z" (UTC)
+      const date = new Date(localDateTime);
+      date.setHours(date.getHours() + 7); // Add 7 hours to get UTC
+      return date;
     };
 
     const examData = {
@@ -422,8 +427,8 @@ router.post("/", async (req, res) => {
       duration: parseInt(duration) || 60,
       attempts: parseInt(attempts) || 1,
       scorePerQuestion: parseFloat(scorePerQuestion) || 1,
-      openTime: storeVietnamTime(openTime),
-      closeTime: storeVietnamTime(closeTime),
+      openTime: convertVietnamToUTC(openTime),
+      closeTime: convertVietnamToUTC(closeTime),
     };
 
     const newExam = new PracticeExam(examData);
@@ -478,10 +483,12 @@ router.put("/:id", async (req, res) => {
     const exam = await PracticeExam.findById(req.params.id);
     if (!exam) return res.status(404).json({ error: "Exam not found" });
 
-    // Store Vietnam time directly in database (no UTC conversion)
-    const storeVietnamTime = (localDateTime) => {
+    // Convert datetime-local (Vietnam time) to UTC for database storage
+    const convertVietnamToUTC = (localDateTime) => {
       if (!localDateTime) return null;
-      return new Date(localDateTime);
+      const date = new Date(localDateTime);
+      date.setHours(date.getHours() + 7); // Add 7 hours to convert Vietnam local to UTC
+      return date;
     };
 
     const updateData = {
@@ -493,8 +500,8 @@ router.put("/:id", async (req, res) => {
       scorePerQuestion: parseFloat(req.body.scorePerQuestion) || exam.scorePerQuestion,
     };
 
-    if (req.body.openTime?.trim()) updateData.openTime = storeVietnamTime(req.body.openTime);
-    if (req.body.closeTime?.trim()) updateData.closeTime = storeVietnamTime(req.body.closeTime);
+    if (req.body.openTime?.trim()) updateData.openTime = convertVietnamToUTC(req.body.openTime);
+    if (req.body.closeTime?.trim()) updateData.closeTime = convertVietnamToUTC(req.body.closeTime);
 
     const updatedExam = await PracticeExam.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true })
       .populate('subject', 'name')

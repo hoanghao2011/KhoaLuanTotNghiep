@@ -53,29 +53,41 @@ function StudentExamsPage({ studentUsername }) {
     return () => clearInterval(interval);
   }, []);
 
+  // Helper: Convert UTC time from database to Vietnam local time
+  const convertUTCtoVietnam = (utcDate) => {
+    if (!utcDate) return null;
+    const date = new Date(utcDate);
+    // Database stores UTC, add 7 hours to get Vietnam time
+    date.setHours(date.getHours() + 7);
+    return date;
+  };
+
   // Trạng thái đề
   const getExamStatus = (exam) => {
-    // Compare with Vietnam local time (database stores Vietnam time directly)
+    // Get current Vietnam time
     const now = new Date();
-    const open = exam.openTime ? new Date(exam.openTime) : null;
-    const close = exam.closeTime ? new Date(exam.closeTime) : null;
+    const vietnamNow = new Date(now.getTime() + 7 * 60 * 60 * 1000);
+
+    // Convert open/close times from UTC to Vietnam
+    const open = exam.openTime ? convertUTCtoVietnam(new Date(exam.openTime)) : null;
+    const close = exam.closeTime ? convertUTCtoVietnam(new Date(exam.closeTime)) : null;
 
     if (!open) return { text: "Chưa đặt lịch", color: "#94a3b8", type: "unset" };
-    if (now < open) return { text: "Chưa mở", color: "#f59e0b", type: "not-open" };
-    if (close && now > close) return { text: "Đã đóng", color: "#dc2626", type: "closed" };
+    if (vietnamNow < open) return { text: "Chưa mở", color: "#f59e0b", type: "not-open" };
+    if (close && vietnamNow > close) return { text: "Đã đóng", color: "#dc2626", type: "closed" };
     return { text: "Đang mở", color: "#16a34a", type: "open" };
   };
 
-  // Format datetime (Vietnam local time)
+  // Format datetime - display Vietnam time
   const formatDateTime = (str) => {
     if (!str) return "Chưa đặt";
-    // Database stores Vietnam time directly, so display as-is
-    const date = new Date(str);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
+    // Convert UTC from database to Vietnam time
+    const vietnamDate = convertUTCtoVietnam(new Date(str));
+    const year = vietnamDate.getFullYear();
+    const month = String(vietnamDate.getMonth() + 1).padStart(2, '0');
+    const day = String(vietnamDate.getDate()).padStart(2, '0');
+    const hours = String(vietnamDate.getHours()).padStart(2, '0');
+    const minutes = String(vietnamDate.getMinutes()).padStart(2, '0');
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 
