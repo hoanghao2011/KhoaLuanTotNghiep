@@ -176,8 +176,7 @@ function StudentTestExamsPage({ studentUsername }) {
   }, []);
 
   const getExamStatus = (exam) => {
-    // Get current UTC time from ISO string to match server time
-    const now = new Date(new Date().toISOString());
+    const now = new Date();
     const open = exam.openTime ? new Date(exam.openTime) : null;
     const close = exam.closeTime ? new Date(exam.closeTime) : null;
 
@@ -189,13 +188,12 @@ function StudentTestExamsPage({ studentUsername }) {
 
   const formatDateTime = (str) => {
     if (!str) return "Chưa đặt";
-    // IMPORTANT: Don't use getHours() - it returns local browser time!
-    // Extract UTC components from ISO string instead
     const date = new Date(str);
-    const isoString = date.toISOString(); // e.g., "2025-12-04T01:00:00.000Z"
-    const [datePart, timePart] = isoString.split('T'); // ["2025-12-04", "01:00:00.000Z"]
-    const [year, month, day] = datePart.split('-');
-    const [hours, minutes] = timePart.split(':');
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 

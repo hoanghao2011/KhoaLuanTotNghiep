@@ -198,13 +198,12 @@ function PracticeExamPage() {
 
   const formatDateTime = (dateString) => {
     if (!dateString) return "Chưa đặt";
-    // IMPORTANT: Don't use getHours() - it returns local browser time!
-    // Extract UTC components from ISO string instead
     const date = new Date(dateString);
-    const isoString = date.toISOString(); // e.g., "2025-12-04T01:00:00.000Z"
-    const [datePart, timePart] = isoString.split('T'); // ["2025-12-04", "01:00:00.000Z"]
-    const [year, month, day] = datePart.split('-');
-    const [hours, minutes] = timePart.split(':');
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 const showValidationError = (title, text) => {
@@ -307,19 +306,15 @@ const handleSaveExam = async () => {
 
       const data = await res.json();
 
-      // Helper: Convert UTC datetime to datetime-local input format
-      // The database stores time in UTC (with Z suffix)
-      // We need to extract the UTC time components and format for datetime-local input
-      const getLocalDateTime = (utcDateString) => {
-        if (!utcDateString) return "";
-        const date = new Date(utcDateString);
-
-        // Extract UTC time components (NOT local time)
-        // toISOString() gives us "2025-12-04T06:35:00.000Z"
-        // We want to put "2025-12-04T06:35" into the datetime-local input
-        const isoString = date.toISOString();
-        // Remove the ".000Z" part and return "2025-12-04T06:35"
-        return isoString.substring(0, 16);
+      const getLocalDateTime = (dateString) => {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
       };
 
       setIsEditMode(true);
