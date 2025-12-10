@@ -12,9 +12,9 @@ const TeachingAssignment = require("../models/TeachingAssignment");
 const User = require("../models/User");
 const multer = require("multer");
 const upload = multer({ dest: "uploads/" });
-// ============================
-// GET: Lấy tất cả đề
-// ============================
+
+const moment = require('moment-timezone');
+
 router.get("/", async (req, res) => {
   try {
     const { userId, role } = req.query;
@@ -37,7 +37,6 @@ router.get("/", async (req, res) => {
       }
 
       if (classIds.length === 0) return res.json([]);
-      // Thay đổi từ filter.class thành kiểm tra trong mảng classes
       filter.classes = { $in: classIds };
     }
 
@@ -48,12 +47,74 @@ router.get("/", async (req, res) => {
       .populate('teacher', 'name')
       .sort({ createdAt: -1 });
 
+    // Debug log trước khi chuyển đổi múi giờ
+    console.log("Exams retrieved from DB:", exams.map(exam => ({
+      title: exam.title,
+      openTime: exam.openTime,
+      closeTime: exam.closeTime,
+    })));
+
+    // IMPORTANT: Don't convert to Asia/Ho_Chi_Minh here!
+    // Frontend handles timezone display using UTC from ISO string
+    // Sending timezone-converted times causes +7h offset bug on client side
+    console.log("Exams sent to frontend (UTC format):", exams.map(exam => ({
+      title: exam.title,
+      openTime: exam.openTime?.toISOString?.(),
+      closeTime: exam.closeTime?.toISOString?.(),
+    })));
+
     res.json(exams);
   } catch (err) {
     console.error("Error fetching practice exams:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
+
+
+
+// ============================
+// GET: Lấy tất cả đề
+// ============================
+// router.get("/", async (req, res) => {
+//   try {
+//     const { userId, role } = req.query;
+//     let filter = {};
+
+//     if (role && role !== "admin") {
+//       const activeSemester = await Semester.findOne({ isActive: true });
+//       if (!activeSemester) return res.json([]);
+
+//       let classIds = [];
+
+//       if (role === "teacher" && userId) {
+//         const classes = await Class.find({ teacher: userId, semester: activeSemester._id });
+//         classIds = classes.map(c => c._id);
+//       } else if (role === "student" && userId) {
+//         const user = await User.findOne({ username: userId });
+//         if (!user) return res.status(404).json({ error: "Student not found" });
+//         const classes = await Class.find({ students: user._id, semester: activeSemester._id });
+//         classIds = classes.map(c => c._id);
+//       }
+
+//       if (classIds.length === 0) return res.json([]);
+//       // Thay đổi từ filter.class thành kiểm tra trong mảng classes
+//       filter.classes = { $in: classIds };
+//     }
+
+//     const exams = await PracticeExam.find(filter)
+//       .populate('subject', 'name')
+//       .populate('categories', 'name')
+//       .populate('classes', 'className')  // populate mảng classes
+//       .populate('teacher', 'name')
+//       .sort({ createdAt: -1 });
+
+//     res.json(exams);
+//   } catch (err) {
+//     console.error("Error fetching practice exams:", err);
+//     res.status(500).json({ error: err.message });
+//   }
+// });
 
 // ============================
 // GET: Lấy đề của giảng viên
