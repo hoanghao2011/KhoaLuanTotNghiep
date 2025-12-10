@@ -406,14 +406,14 @@ router.post("/", async (req, res) => {
     }
 
     // Convert datetime-local (Vietnam time) to UTC for database storage
-    // datetime-local input "22:20" is Vietnam time (UTC+7)
-    // Convert to UTC by subtracting 7 hours so database stores correct UTC value
+    // datetime-local input "10:35" is Vietnam time (UTC+7)
+    // When server parses it, JS treats it as UTC, but we want to store the actual UTC time
+    // So we need to SUBTRACT 7 hours to correct for the timezone difference
+    // Example: "2025-12-10T10:35" (Vietnam 10:35) = "2025-12-10T03:35Z" (UTC 3:35)
     const convertVietnamToUTC = (localDateTime) => {
       if (!localDateTime) return null;
-      // Parse the datetime string and add 7 hours to convert Vietnam local to UTC
-      // Example: "2025-12-10T22:20" (Vietnam) = "2025-12-10T15:20Z" (UTC)
       const date = new Date(localDateTime);
-      date.setHours(date.getHours() + 7); // Add 7 hours to get UTC
+      date.setHours(date.getHours() - 7); // Subtract 7 hours to convert Vietnam time to UTC
       return date;
     };
 
@@ -487,7 +487,7 @@ router.put("/:id", async (req, res) => {
     const convertVietnamToUTC = (localDateTime) => {
       if (!localDateTime) return null;
       const date = new Date(localDateTime);
-      date.setHours(date.getHours() + 7); // Add 7 hours to convert Vietnam local to UTC
+      date.setHours(date.getHours() - 7); // Subtract 7 hours to convert Vietnam time to UTC
       return date;
     };
 
