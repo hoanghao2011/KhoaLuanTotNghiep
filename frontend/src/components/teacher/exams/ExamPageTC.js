@@ -224,7 +224,13 @@ const loadExams = async () => {
   }
 
   try {
-    const res = await fetch(`${API_URL}/test-exams?teacherId=${currentUser._id}`);
+    const res = await fetch(`${API_URL}/test-exams?teacherId=${currentUser._id}`, {
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
+      }
+    });
     if (!res.ok) throw new Error("Lỗi tải đề");
     const data = await res.json();
     setExams(data);
@@ -413,7 +419,13 @@ const loadExams = async () => {
 
     try {
       // Fetch chi tiết exam để đảm bảo dữ liệu đúng (giống như PracticeExamPage)
-      const res = await fetch(`${API_URL}/test-exams/${exam._id}`);
+      const res = await fetch(`${API_URL}/test-exams/${exam._id}`, {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0"
+        }
+      });
       if (!res.ok) throw new Error("Không thể tải đề");
       const data = await res.json();
 

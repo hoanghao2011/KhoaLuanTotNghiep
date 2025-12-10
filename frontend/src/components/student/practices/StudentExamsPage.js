@@ -25,6 +25,11 @@ function StudentExamsPage({ studentUsername }) {
       try {
         const res = await axios.get("https://khoaluantotnghiep-5ff3.onrender.com/api/practice-exams", {
           params: { userId: studentUsername, role: "student" },
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+          }
         });
 
         setExams(res.data || []);

@@ -155,7 +155,13 @@ function PracticeExamPage() {
     if (!currentUser?._id) return;
 
     try {
-      const res = await fetch(`${API_BASE}/practice-exams/teacher/${currentUser._id}`);
+      const res = await fetch(`${API_BASE}/practice-exams/teacher/${currentUser._id}`, {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0"
+        }
+      });
       if (!res.ok) throw new Error("Lỗi tải đề");
       const data = await res.json();
       setExams(data);
@@ -290,7 +296,13 @@ const handleSaveExam = async () => {
   const handleEditExam = async (e, exam) => {
     e.stopPropagation();
     try {
-      const res = await fetch(`${API_BASE}/practice-exams/${exam._id}`);
+      const res = await fetch(`${API_BASE}/practice-exams/${exam._id}`, {
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Pragma": "no-cache",
+          "Expires": "0"
+        }
+      });
       if (!res.ok) throw new Error("Không thể tải đề");
 
       const data = await res.json();

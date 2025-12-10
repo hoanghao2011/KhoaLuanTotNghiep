@@ -62,7 +62,13 @@ function StudentTestExamsPage({ studentUsername }) {
 
       try {
         // 1. Lấy tất cả lớp
-        const classesRes = await axios.get("https://khoaluantotnghiep-5ff3.onrender.com/api/classes");
+        const classesRes = await axios.get("https://khoaluantotnghiep-5ff3.onrender.com/api/classes", {
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Pragma": "no-cache",
+            "Expires": "0"
+          }
+        });
         const allClasses = classesRes.data;
 
         // 2. Lọc lớp của sinh viên
@@ -75,7 +81,14 @@ function StudentTestExamsPage({ studentUsername }) {
           try {
             const res = await axios.get(
               "https://khoaluantotnghiep-5ff3.onrender.com/api/test-exams/student/published",
-              { params: { studentClassId: cls._id } }
+              {
+                params: { studentClassId: cls._id },
+                headers: {
+                  "Cache-Control": "no-cache, no-store, must-revalidate",
+                  "Pragma": "no-cache",
+                  "Expires": "0"
+                }
+              }
             );
             console.log(`✅ Found ${res.data.length} published exams for student in class ${cls._id}`);
             return res.data.map(exam => ({
@@ -121,7 +134,13 @@ function StudentTestExamsPage({ studentUsername }) {
           try {
             const url = `https://khoaluantotnghiep-5ff3.onrender.com/api/test-exams/${exam._id}/check-attempt?studentId=${studentId}`;
             console.log(`🔍 Request URL: ${url}`); // ✅ DEBUG
-            const res = await axios.get(url);
+            const res = await axios.get(url, {
+              headers: {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+              }
+            });
             console.log(`✅ Check attempt for ${exam.title}: ${res.data.hasAttempted}`); // ✅ DEBUG
             attemptStatus[exam._id] = res.data.hasAttempted;
           } catch (err) {
