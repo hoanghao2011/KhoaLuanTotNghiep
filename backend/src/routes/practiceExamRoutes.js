@@ -405,14 +405,11 @@ router.post("/", async (req, res) => {
       return res.status(403).json({ error: "Bạn không được phân công dạy môn này cho tất cả các lớp đã chọn" });
     }
 
-    // Helper: Convert datetime-local (Vietnam local time) to UTC
-    // datetime-local input value is in browser's local timezone
-    // We need to convert to UTC by subtracting 7 hours (Vietnam is UTC+7)
-    const convertLocalToUTC = (localDateTime) => {
+    // Store Vietnam time directly in database (no UTC conversion)
+    // datetime-local input is already in Vietnam time, just parse as-is
+    const storeVietnamTime = (localDateTime) => {
       if (!localDateTime) return null;
-      const date = new Date(localDateTime + 'Z'); // Parse as if it were UTC first
-      date.setHours(date.getHours() - 7); // Subtract 7 hours to get actual UTC
-      return date;
+      return new Date(localDateTime);
     };
 
     const examData = {
@@ -425,8 +422,8 @@ router.post("/", async (req, res) => {
       duration: parseInt(duration) || 60,
       attempts: parseInt(attempts) || 1,
       scorePerQuestion: parseFloat(scorePerQuestion) || 1,
-      openTime: convertLocalToUTC(openTime),
-      closeTime: convertLocalToUTC(closeTime),
+      openTime: storeVietnamTime(openTime),
+      closeTime: storeVietnamTime(closeTime),
     };
 
     const newExam = new PracticeExam(examData);
@@ -481,12 +478,10 @@ router.put("/:id", async (req, res) => {
     const exam = await PracticeExam.findById(req.params.id);
     if (!exam) return res.status(404).json({ error: "Exam not found" });
 
-    // Helper: Convert datetime-local (Vietnam local time) to UTC
-    const convertLocalToUTC = (localDateTime) => {
+    // Store Vietnam time directly in database (no UTC conversion)
+    const storeVietnamTime = (localDateTime) => {
       if (!localDateTime) return null;
-      const date = new Date(localDateTime + 'Z');
-      date.setHours(date.getHours() - 7);
-      return date;
+      return new Date(localDateTime);
     };
 
     const updateData = {
@@ -498,8 +493,8 @@ router.put("/:id", async (req, res) => {
       scorePerQuestion: parseFloat(req.body.scorePerQuestion) || exam.scorePerQuestion,
     };
 
-    if (req.body.openTime?.trim()) updateData.openTime = convertLocalToUTC(req.body.openTime);
-    if (req.body.closeTime?.trim()) updateData.closeTime = convertLocalToUTC(req.body.closeTime);
+    if (req.body.openTime?.trim()) updateData.openTime = storeVietnamTime(req.body.openTime);
+    if (req.body.closeTime?.trim()) updateData.closeTime = storeVietnamTime(req.body.closeTime);
 
     const updatedExam = await PracticeExam.findByIdAndUpdate(req.params.id, updateData, { new: true, runValidators: true })
       .populate('subject', 'name')

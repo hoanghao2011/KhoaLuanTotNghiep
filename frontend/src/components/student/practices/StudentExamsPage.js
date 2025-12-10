@@ -55,21 +55,10 @@ function StudentExamsPage({ studentUsername }) {
 
   // Trạng thái đề
   const getExamStatus = (exam) => {
-    // Get current UTC time from ISO string to match server time
-    const now = new Date(new Date().toISOString());
+    // Compare with Vietnam local time (database stores Vietnam time directly)
+    const now = new Date();
     const open = exam.openTime ? new Date(exam.openTime) : null;
     const close = exam.closeTime ? new Date(exam.closeTime) : null;
-
-    // DEBUG: Log time comparison
-    if (exam.title === "4") {
-      console.log(`[DEBUG] Exam: ${exam.title}`);
-      console.log(`  now: ${now.toISOString()} (${now.getTime()})`);
-      console.log(`  open: ${open ? open.toISOString() : 'null'} (${open ? open.getTime() : 'null'})`);
-      console.log(`  now < open: ${now < open}`);
-      console.log(`  now.getTime() = ${now.getTime()}`);
-      console.log(`  open.getTime() = ${open ? open.getTime() : 'null'}`);
-      console.log(`  Difference (ms): ${open ? now.getTime() - open.getTime() : 'N/A'}`);
-    }
 
     if (!open) return { text: "Chưa đặt lịch", color: "#94a3b8", type: "unset" };
     if (now < open) return { text: "Chưa mở", color: "#f59e0b", type: "not-open" };
@@ -77,16 +66,16 @@ function StudentExamsPage({ studentUsername }) {
     return { text: "Đang mở", color: "#16a34a", type: "open" };
   };
 
-  // Format datetime
+  // Format datetime (Vietnam local time)
   const formatDateTime = (str) => {
     if (!str) return "Chưa đặt";
-    // IMPORTANT: Don't use getHours() - it returns local browser time!
-    // Extract UTC components from ISO string instead
+    // Database stores Vietnam time directly, so display as-is
     const date = new Date(str);
-    const isoString = date.toISOString(); // e.g., "2025-12-04T01:00:00.000Z"
-    const [datePart, timePart] = isoString.split('T'); // ["2025-12-04", "01:00:00.000Z"]
-    const [year, month, day] = datePart.split('-');
-    const [hours, minutes] = timePart.split(':');
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 
