@@ -16,12 +16,6 @@ function ExamPageTC() {
   const [refreshKey, setRefreshKey] = useState(0); // Trigger re-render for status updates
   const navigate = useNavigate();
 
-  const convertUTCtoVietnam = (utcDate) => {
-    if (!utcDate) return null;
-    const date = new Date(utcDate);
-    date.setHours(date.getHours() + 7);
-    return date;
-  };
 
   // Form tạo/sửa đề
   const [subjects, setSubjects] = useState([]);
@@ -65,12 +59,12 @@ function ExamPageTC() {
 
   const formatDateTime = (dateString) => {
     if (!dateString) return "Chưa đặt";
-    const vietnamDate = convertUTCtoVietnam(new Date(dateString));
-    const year = vietnamDate.getFullYear();
-    const month = String(vietnamDate.getMonth() + 1).padStart(2, '0');
-    const day = String(vietnamDate.getDate()).padStart(2, '0');
-    const hours = String(vietnamDate.getHours()).padStart(2, '0');
-    const minutes = String(vietnamDate.getMinutes()).padStart(2, '0');
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 
@@ -274,17 +268,16 @@ const loadExams = async () => {
       return { status: "Bản nháp", className: "status-draft" };
     }
     const now = new Date();
-    const vietnamNow = new Date(now.getTime() + 7 * 60 * 60 * 1000);
-    const openTimeDate = exam.openTime ? convertUTCtoVietnam(new Date(exam.openTime)) : null;
-    const closeTimeDate = exam.closeTime ? convertUTCtoVietnam(new Date(exam.closeTime)) : null;
+    const openTimeDate = exam.openTime ? new Date(exam.openTime) : null;
+    const closeTimeDate = exam.closeTime ? new Date(exam.closeTime) : null;
 
     if (!openTimeDate) {
       return { status: "Chưa đặt lịch", className: "status-pending" };
     }
-    if (vietnamNow < openTimeDate) {
+    if (now < openTimeDate) {
       return { status: "Chưa mở", className: "status-upcoming" };
     }
-    if (closeTimeDate && vietnamNow > closeTimeDate) {
+    if (closeTimeDate && now > closeTimeDate) {
       return { status: "Đã đóng", className: "status-closed" };
     }
     return { status: "Đang thi", className: "status-active" };
@@ -411,12 +404,12 @@ const loadExams = async () => {
 
     const getLocalDateTime = (dateString) => {
       if (!dateString) return "";
-      const vietnamDate = convertUTCtoVietnam(new Date(dateString));
-      const year = vietnamDate.getFullYear();
-      const month = String(vietnamDate.getMonth() + 1).padStart(2, '0');
-      const day = String(vietnamDate.getDate()).padStart(2, '0');
-      const hours = String(vietnamDate.getHours()).padStart(2, '0');
-      const minutes = String(vietnamDate.getMinutes()).padStart(2, '0');
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
       return `${year}-${month}-${day}T${hours}:${minutes}`;
     };
 
