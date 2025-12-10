@@ -60,6 +60,17 @@ function StudentExamsPage({ studentUsername }) {
     const open = exam.openTime ? new Date(exam.openTime) : null;
     const close = exam.closeTime ? new Date(exam.closeTime) : null;
 
+    // DEBUG: Log time comparison
+    if (exam.title === "4") {
+      console.log(`[DEBUG] Exam: ${exam.title}`);
+      console.log(`  now: ${now.toISOString()} (${now.getTime()})`);
+      console.log(`  open: ${open ? open.toISOString() : 'null'} (${open ? open.getTime() : 'null'})`);
+      console.log(`  now < open: ${now < open}`);
+      console.log(`  now.getTime() = ${now.getTime()}`);
+      console.log(`  open.getTime() = ${open ? open.getTime() : 'null'}`);
+      console.log(`  Difference (ms): ${open ? now.getTime() - open.getTime() : 'N/A'}`);
+    }
+
     if (!open) return { text: "Chưa đặt lịch", color: "#94a3b8", type: "unset" };
     if (now < open) return { text: "Chưa mở", color: "#f59e0b", type: "not-open" };
     if (close && now > close) return { text: "Đã đóng", color: "#dc2626", type: "closed" };
