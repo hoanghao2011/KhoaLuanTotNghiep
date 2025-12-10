@@ -26,12 +26,15 @@ const calculateCloseTime = (openTime, duration, bufferTime = 5) => {
   return close;
 };
 
-// Helper: Parse datetime-local string (without timezone) as UTC
-// Input: "2025-01-15T12:30" -> Output: Date object representing 2025-01-15T12:30Z
+// Helper: Parse datetime-local string (Vietnam local time) and convert to UTC
+// Input: "2025-01-15T12:30" (Vietnam time) -> Output: Date object in UTC
+// Vietnam is UTC+7, so we subtract 7 hours to get the actual UTC time
 const parseLocalTimeAsUTC = (dateTimeString) => {
   if (!dateTimeString) return null;
-  // Append 'Z' to treat local datetime as UTC
-  return new Date(dateTimeString + 'Z');
+  // Parse as if it were UTC first, then subtract 7 hours to get actual UTC
+  const date = new Date(dateTimeString + 'Z');
+  date.setHours(date.getHours() - 7);
+  return date;
 };
 
 // ✅ HELPER: Kiểm tra đề có được phép chỉnh sửa không (draft + chưa tới openTime)
