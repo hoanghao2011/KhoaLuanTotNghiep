@@ -8,6 +8,7 @@ function StudentTestExamsPage({ studentUsername }) {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [attemptedExams, setAttemptedExams] = useState({}); // Track which exams have been attempted
+  const [refreshKey, setRefreshKey] = useState(0); // Trigger re-render for status updates
   const navigate = useNavigate();
 
   // 🔄 Re-check attempt status khi user quay lại từ trang khác
@@ -146,6 +147,15 @@ function StudentTestExamsPage({ studentUsername }) {
     console.log("🔍 Current attemptedExams state:", attemptedExams);
   }, [attemptedExams]);
 
+  // Refresh exam status every 30 seconds to catch when exams open/close
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRefreshKey(prev => prev + 1);
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   const getExamStatus = (exam) => {
     // Get current UTC time from ISO string to match server time
     const now = new Date(new Date().toISOString());
@@ -212,8 +222,9 @@ function StudentTestExamsPage({ studentUsername }) {
           <small>Hãy liên hệ giáo viên để được thêm vào lớp học.</small>
         </div>
       ) : (
-        <div className="exam-list">
+        <div className="exam-list" key={refreshKey}>
           {displayedExams.map((exam) => {
+            // refreshKey triggers recalculation of exam status every 30 seconds
             const status = getExamStatus(exam);
             const isOpen = status.type === "open";
             // ✅ FIX: Kiểm tra explicitly true, không phải truthy

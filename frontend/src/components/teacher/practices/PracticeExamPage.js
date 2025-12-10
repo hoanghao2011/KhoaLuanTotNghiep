@@ -12,6 +12,7 @@ function PracticeExamPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingExamId, setEditingExamId] = useState(null);
   const [selectedClasses, setSelectedClasses] = useState([]);
+  const [refreshKey, setRefreshKey] = useState(0); // Trigger re-render for status updates
   const navigate = useNavigate();
 
   // Dữ liệu từ endpoint teacher-subjects (chỉ categories của chính giáo viên)
@@ -34,6 +35,15 @@ function PracticeExamPage() {
   // Load danh sách đề
   useEffect(() => {
     loadExams();
+  }, []);
+
+  // Refresh exam status every 30 seconds to catch when exams open/close
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRefreshKey(prev => prev + 1);
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
   }, []);
 
   // Load dữ liệu giáo viên: môn + categories do chính mình tạo
@@ -346,13 +356,16 @@ const handleSaveExam = async () => {
         </button>
       </div>
 
-      <ul>
+      <ul key={refreshKey}>
         {exams.length === 0 ? (
           <p style={{ textAlign: "center", color: "#999", padding: "40px" }}>
             Chưa có đề luyện tập nào. Nhấn nút "+" để tạo đề mới.
           </p>
         ) : (
-          exams.map((exam) => (
+          exams.map((exam) => {
+            // refreshKey triggers recalculation of exam status every 30 seconds
+            const examStatus = getExamStatus(exam);
+            return (
             <li
               key={exam._id}
               className="exam-item"
@@ -368,8 +381,8 @@ const handleSaveExam = async () => {
 </span>
                   </span>
                   <div className="exam-metadata">
-                    <span className={`exam-status ${getExamStatus(exam).className}`}>
-                      {getExamStatus(exam).status}
+                    <span className={`exam-status ${examStatus.className}`}>
+                      {examStatus.status}
                     </span>
                     <span className="exam-time">Mở: {formatDateTime(exam.openTime)}</span>
                   </div>
@@ -384,7 +397,8 @@ const handleSaveExam = async () => {
                 </div>
               </div>
             </li>
-          ))
+            );
+          })
         )}
       </ul>
 

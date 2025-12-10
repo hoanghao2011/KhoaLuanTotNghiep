@@ -13,6 +13,7 @@ function ExamPageTC() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingExamId, setEditingExamId] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0); // Trigger re-render for status updates
   const navigate = useNavigate();
 
   // Form tạo/sửa đề
@@ -108,6 +109,15 @@ function ExamPageTC() {
 
   useEffect(() => {
     loadExams();
+  }, []);
+
+  // Refresh exam status every 30 seconds to catch when exams open/close
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRefreshKey(prev => prev + 1);
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -446,9 +456,10 @@ const loadExams = async () => {
         </button>
       </div>
 
-      <div className="exam-list">
+      <div className="exam-list" key={refreshKey}>
         {exams.length > 0 ? (
           exams.map(exam => {
+            // refreshKey triggers recalculation of exam status every 30 seconds
             const { status, className } = getExamStatus(exam);
             const isEditable = canEdit(exam);
             const isDeletable = canDelete(exam);

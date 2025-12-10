@@ -7,6 +7,7 @@ import "../../../styles/StudentExamsPage.css";
 function StudentExamsPage({ studentUsername }) {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0); // Trigger re-render for status updates
   const navigate = useNavigate();
 
   // Lấy userId từ current user (app_user) để tách biệt dữ liệu của các user khác nhau
@@ -37,6 +38,15 @@ function StudentExamsPage({ studentUsername }) {
 
     fetchMyExams();
   }, [studentUsername]);
+
+  // Refresh exam status every 30 seconds to catch when exams open/close
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRefreshKey(prev => prev + 1);
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Trạng thái đề
   const getExamStatus = (exam) => {
@@ -98,7 +108,7 @@ function StudentExamsPage({ studentUsername }) {
           <small>Hãy liên hệ giáo viên để được thêm vào lớp học.</small>
         </div>
       ) : (
-        <div className="exam-list">
+        <div className="exam-list" key={refreshKey}>
           {exams
             .filter((exam) => {
               // Get current UTC time to match server time
@@ -107,6 +117,7 @@ function StudentExamsPage({ studentUsername }) {
               return !close || now <= close;
             })
             .map((exam) => {
+              // refreshKey triggers recalculation of exam status every 30 seconds
               const status = getExamStatus(exam);
               const isOpen = status.type === "open";
 
