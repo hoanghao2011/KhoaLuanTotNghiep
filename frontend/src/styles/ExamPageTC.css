@@ -308,6 +308,15 @@
   background: #fff5f5;
 }
 
+.btn-purple {
+  border-color: #9b59b6;
+  color: #9b59b6;
+}
+
+.btn-purple:hover:not(:disabled) {
+  background: #f3e5f5;
+}
+
 /* ═══════════════════════════════════════════════════════════ */
 /* 📢 NO EXAMS MESSAGE */
 /* ═══════════════════════════════════════════════════════════ */
@@ -729,4 +738,35 @@
   .modal-content {
     max-width: 95%;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* 🤖 AI EXAM MODAL STYLES */
+/* ═══════════════════════════════════════════════════════════ */
+
+.ai-info-banner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px 20px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.ai-info-banner p {
+  margin: 8px 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.ai-info-banner strong {
+  font-weight: 600;
+}
+
+.help-text {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #666;
+  font-style: italic;
 }

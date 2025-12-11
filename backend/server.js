@@ -1,11 +1,20 @@
 // server.js
-const express = require("express"); // THIẾU DÒNG NÀY!
-const cors = require("cors");
+// ⚠️ CRITICAL: Load dotenv FIRST before any other imports
 const dotenv = require("dotenv");
+dotenv.config();
+
+// Debug: Verify environment variables are loaded
+console.log('🔧 Environment loaded:');
+console.log('   PORT:', process.env.PORT);
+console.log('   NODE_ENV:', process.env.NODE_ENV);
+console.log('   ANTHROPIC_API_KEY:', process.env.ANTHROPIC_API_KEY ? '✅ Loaded' : '❌ Missing');
+
+const express = require("express");
+const cors = require("cors");
 const connectDB = require("./src/config/db");
 const path = require("path");
 
-// Import routes
+// Import routes (AFTER dotenv.config())
 const subjectRoutes = require("./src/routes/subjectRoutes");
 const categoryRoutes = require("./src/routes/categoryRoutes");
 const questionRoutes = require("./src/routes/questionRoutes");
@@ -13,13 +22,9 @@ const practiceExamRoutes = require("./src/routes/practiceExamRoutes");
 const testExamRoutes = require("./src/routes/testExamRoutes");
 const teachingAssignmentRoutes = require("./src/routes/teachingAssignment");
 const userRoutes = require("./src/routes/userRoutes");
-const semesterRoutes = require("./src/routes/semesterRoutes"); // ĐÃ CÓ
+const semesterRoutes = require("./src/routes/semesterRoutes");
 const classRoutes = require("./src/routes/classRoutes");
-
-
 const examRoutes = require("./src/routes/testExamRoutes");
-
-dotenv.config();
 
 const app = express(); // BÂY GIỜ MỚI CÓ express!
 

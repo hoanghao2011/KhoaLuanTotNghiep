@@ -6,7 +6,8 @@ import axios from "axios";
 import "../../../styles/ExamPageTC.css";
 import { useNavigate } from "react-router-dom";
 
-const API_URL = "https://khoaluantotnghiep-5ff3.onrender.com/api";
+const API_URL = "https://khoaluantotnghiep-5ff3.onrender.com/api"; // Production
+// const API_URL = "http://localhost:5000/api"; // Local testing
 
 function ExamPageTC() {
   const [exams, setExams] = useState([]);
@@ -15,6 +16,19 @@ function ExamPageTC() {
   const [editingExamId, setEditingExamId] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0); // Trigger re-render for status updates
   const navigate = useNavigate();
+
+  // ✅ NEW: AI Exam Modal states
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [aiSourceExamId, setAISourceExamId] = useState("");
+  const [aiExamName, setAIExamName] = useState("");
+  const [aiSelectedClass, setAISelectedClass] = useState("");
+  const [aiNewCategoryName, setAINewCategoryName] = useState("");
+  const [aiDuration, setAIDuration] = useState(60);
+  const [aiBufferTime, setAIBufferTime] = useState(5);
+  const [aiOpenTime, setAIOpenTime] = useState("");
+  const [aiShowResultImmediately, setAIShowResultImmediately] = useState(true);
+  const [aiShowCorrectAnswers, setAIShowCorrectAnswers] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
 
   // Form tạo/sửa đề
@@ -366,6 +380,154 @@ const loadExams = async () => {
     }
   };
 
+  // ==================== 🤖 AI EXAM FUNCTIONS ====================
+
+  const openAIModal = async (sourceExam) => {
+    setAISourceExamId(sourceExam._id);
+    setAIExamName(`${sourceExam.title} - AI Generated`);
+    setAINewCategoryName(`AI - ${sourceExam.title}`);
+    setAIDuration(sourceExam.duration || 60);
+    setAIBufferTime(sourceExam.bufferTime || 5);
+    setAIShowResultImmediately(sourceExam.showResultImmediately);
+    setAIShowCorrectAnswers(sourceExam.showCorrectAnswers);
+
+    // Lọc lớp chỉ lấy lớp của cùng môn với đề gốc
+    try {
+      const res = await fetch(`${API_URL}/teaching-assignments/teacher/${currentUser._id}`);
+      if (res.ok) {
+        const assigns = await res.json();
+        const classesOfSameSubject = assigns
+          .filter(a =>
+            a.subject &&
+            String(a.subject._id) === String(sourceExam.subject._id) &&
+            a.class &&
+            a.class._id
+          )
+          .map(a => a.class);
+
+        // Remove duplicates
+        const uniqueClasses = [];
+        const seenIds = new Set();
+        classesOfSameSubject.forEach(cls => {
+          if (!seenIds.has(cls._id)) {
+            seenIds.add(cls._id);
+            uniqueClasses.push(cls);
+          }
+        });
+
+        setClasses(uniqueClasses);
+        console.log(`📚 Filtered classes for subject ${sourceExam.subject.name}:`, uniqueClasses.length);
+      }
+    } catch (err) {
+      console.error('Error loading classes for AI modal:', err);
+    }
+
+    setIsAIModalOpen(true);
+  };
+
+  const resetAIForm = () => {
+    setAISourceExamId("");
+    setAIExamName("");
+    setAISelectedClass("");
+    setAINewCategoryName("");
+    setAIDuration(60);
+    setAIBufferTime(5);
+    setAIOpenTime("");
+    setAIShowResultImmediately(true);
+    setAIShowCorrectAnswers(false);
+  };
+
+  const handleGenerateAIExam = async () => {
+    if (!aiSourceExamId || !aiExamName || !aiSelectedClass || !aiNewCategoryName) {
+      Swal.fire("Lỗi!", "Vui lòng điền đầy đủ thông tin", "error");
+      return;
+    }
+
+    if (!aiOpenTime) {
+      Swal.fire("Lỗi!", "Vui lòng chọn thời gian mở đề", "error");
+      return;
+    }
+
+    // Lấy thông tin đề mẫu để lấy subject
+    const sourceExam = exams.find(e => e._id === aiSourceExamId);
+    if (!sourceExam) {
+      Swal.fire("Lỗi!", "Không tìm thấy đề thi mẫu", "error");
+      return;
+    }
+
+    const aiExamData = {
+      sourceExamId: aiSourceExamId,
+      title: aiExamName,
+      class: aiSelectedClass,
+      subject: sourceExam.subject._id,
+      duration: aiDuration,
+      bufferTime: aiBufferTime,
+      openTime: aiOpenTime,
+      // passingScore và description sẽ được lấy từ đề mẫu ở backend
+      createdBy: currentUser._id,
+      newCategoryName: aiNewCategoryName,
+      showResultImmediately: aiShowResultImmediately,
+      showCorrectAnswers: aiShowCorrectAnswers,
+    };
+
+    console.log('📤 Sending AI exam data:', aiExamData);
+
+    setIsGeneratingAI(true);
+    try {
+      Swal.fire({
+        title: "Đang tạo đề AI...",
+        html: "Vui lòng đợi, Claude AI đang tạo câu hỏi mới cho bạn.<br>Quá trình này có thể mất vài phút.",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      const response = await axios.post(`${API_URL}/test-exams/generate-ai-exam`, aiExamData);
+
+      await loadExams();
+      setIsAIModalOpen(false);
+      resetAIForm();
+
+      const skippedImages = response.data.sourceQuestionsWithImages || 0;
+      const imageWarning = skippedImages > 0
+        ? `<p style="color: #f39c12; font-size: 14px;">⚠️ Đã bỏ qua ${skippedImages} câu hỏi có ảnh từ đề mẫu</p>`
+        : '';
+
+      Swal.fire({
+        icon: "success",
+        title: "Tạo đề AI thành công!",
+        html: `
+          <p><strong>Đề thi:</strong> ${response.data.exam.title}</p>
+          <p><strong>Số câu hỏi AI:</strong> ${response.data.questionsGenerated}</p>
+          <p><strong>Danh mục mới:</strong> ${response.data.newCategory.name}</p>
+          ${imageWarning}
+        `,
+        confirmButtonText: "Xem chi tiết",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate(`/test-exam-detail/${response.data.exam._id}`);
+        }
+      });
+    } catch (err) {
+      console.error("Error generating AI exam:", err);
+      console.error("Error response:", err.response?.data);
+      console.error("Error status:", err.response?.status);
+      Swal.fire({
+        icon: "error",
+        title: "Lỗi tạo đề AI",
+        html: `
+          <p>${err.response?.data?.error || err.response?.data?.message || err.message}</p>
+          <small style="color: #666; font-size: 12px;">
+            ${err.response?.data?.details ? JSON.stringify(err.response.data.details) : ''}
+          </small>
+        `,
+      });
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
   const handleDeleteExam = async (examId) => {
     const exam = exams.find(e => e._id === examId);
     if (!canDelete(exam)) {
@@ -512,24 +674,32 @@ const loadExams = async () => {
                 {/* ✅ Actions: Compact buttons */}
                 <div className="exam-actions">
                   {isDraft && (
-                    <button 
-                      onClick={() => navigate(`/test-exam-detail/${exam._id}`)} 
+                    <button
+                      onClick={() => navigate(`/test-exam-detail/${exam._id}`)}
                       className="btn-small btn-blue"
                       title="Thêm câu hỏi"
                     >
                       ➕
                     </button>
                   )}
-                  <button 
-                    onClick={() => navigate(`/test-exam-detail/${exam._id}`)} 
+                  <button
+                    onClick={() => navigate(`/test-exam-detail/${exam._id}`)}
                     className="btn-small btn-blue"
                     title="Chi tiết"
                   >
                     📋
                   </button>
+                  {/* ✅ NEW: Tạo đề AI từ đề này */}
+                  <button
+                    onClick={() => openAIModal(exam)}
+                    className="btn-small btn-purple"
+                    title="Tạo đề AI dựa trên đề này"
+                  >
+                    🤖
+                  </button>
                   {/* ✅ Sửa: Button nhỏ */}
-                  <button 
-                    onClick={() => handleEditExam(exam)} 
+                  <button
+                    onClick={() => handleEditExam(exam)}
                     className="btn-small btn-green"
                     disabled={!isEditable}
                     title={isEditable ? "Sửa thông tin" : "Bài đã hết hạn - Không thể sửa"}
@@ -537,8 +707,8 @@ const loadExams = async () => {
                     ✏️
                   </button>
                   {/* ✅ Xóa: Button nhỏ */}
-                  <button 
-                    onClick={() => handleDeleteExam(exam._id)} 
+                  <button
+                    onClick={() => handleDeleteExam(exam._id)}
                     className="btn-small btn-red"
                     disabled={!isDeletable}
                     title={isDeletable ? "Xóa" : "Không thể xóa"}
@@ -829,6 +999,170 @@ const loadExams = async () => {
                   resetForm();
                 }}
                 className="btn-secondary"
+              >
+                Hủy
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== 🤖 MODAL TẠO ĐỀ AI ==================== */}
+      {isAIModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>🤖 Tạo đề thi AI</h3>
+              <button
+                className="modal-close-btn"
+                onClick={() => {
+                  setIsAIModalOpen(false);
+                  resetAIForm();
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="ai-info-banner">
+                <p>
+                  <strong>🎯 Chức năng:</strong> Tạo đề thi mới với câu hỏi hoàn toàn mới được sinh bởi Claude AI,
+                  dựa trên độ khó và phong cách của đề thi mẫu.
+                </p>
+                <p>
+                  <strong>⚡ Lưu ý:</strong> Câu hỏi AI sẽ được lưu vào danh mục mới riêng biệt.
+                  Quá trình tạo có thể mất 1-2 phút.
+                </p>
+                <p>
+                  <strong>📸 Về câu hỏi có ảnh:</strong> AI chỉ tạo câu hỏi từ các câu hỏi text trong đề mẫu.
+                  Câu hỏi có ảnh sẽ được bỏ qua.
+                </p>
+              </div>
+
+              {/* Tên đề thi mới */}
+              <div className="form-group">
+                <label>
+                  Tên đề thi mới <span className="required">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={aiExamName}
+                  onChange={(e) => setAIExamName(e.target.value)}
+                  placeholder="VD: Đề thi Toán - Lớp A2"
+                />
+              </div>
+
+              {/* Tên danh mục mới */}
+              <div className="form-group">
+                <label>
+                  Tên danh mục cho câu hỏi AI <span className="required">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={aiNewCategoryName}
+                  onChange={(e) => setAINewCategoryName(e.target.value)}
+                  placeholder="VD: AI - Đề thi Toán Lớp A2"
+                />
+                <small className="help-text">
+                  Các câu hỏi AI sẽ được lưu vào danh mục này
+                </small>
+              </div>
+
+              {/* Chọn lớp - chỉ lớp cùng môn */}
+              <div className="form-group">
+                <label>
+                  Chọn lớp <span className="required">*</span>
+                </label>
+                <select
+                  value={aiSelectedClass}
+                  onChange={(e) => setAISelectedClass(e.target.value)}
+                >
+                  <option value="">-- Chọn lớp --</option>
+                  {classes.map((cls) => (
+                    <option key={cls._id} value={cls._id}>
+                      {cls.className}
+                    </option>
+                  ))}
+                </select>
+                <small className="help-text">
+                  Chỉ hiển thị các lớp cùng môn với đề gốc
+                </small>
+              </div>
+
+              {/* Thời gian và cấu hình */}
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Thời lượng (phút)</label>
+                  <input
+                    type="number"
+                    value={aiDuration}
+                    onChange={(e) => setAIDuration(parseInt(e.target.value))}
+                    min="1"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Thời gian dự phòng (phút)</label>
+                  <input
+                    type="number"
+                    value={aiBufferTime}
+                    onChange={(e) => setAIBufferTime(parseInt(e.target.value))}
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              {/* Thời gian mở đề */}
+              <div className="form-group">
+                <label>
+                  Thời gian mở đề <span className="required">*</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  value={aiOpenTime}
+                  onChange={(e) => setAIOpenTime(e.target.value)}
+                />
+              </div>
+
+              {/* Tùy chọn hiển thị kết quả */}
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={aiShowResultImmediately}
+                    onChange={(e) => setAIShowResultImmediately(e.target.checked)}
+                  />
+                  Hiển thị kết quả ngay sau khi nộp
+                </label>
+              </div>
+
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={aiShowCorrectAnswers}
+                    onChange={(e) => setAIShowCorrectAnswers(e.target.checked)}
+                  />
+                  Hiển thị đáp án đúng
+                </label>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                onClick={handleGenerateAIExam}
+                className="btn-primary"
+                disabled={isGeneratingAI}
+              >
+                {isGeneratingAI ? "⏳ Đang tạo..." : "🤖 Tạo đề AI"}
+              </button>
+              <button
+                onClick={() => {
+                  setIsAIModalOpen(false);
+                  resetAIForm();
+                }}
+                className="btn-secondary"
+                disabled={isGeneratingAI}
               >
                 Hủy
               </button>

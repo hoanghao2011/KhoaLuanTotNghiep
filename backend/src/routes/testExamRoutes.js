@@ -3,9 +3,11 @@ const router = express.Router();
 const Exam = require('../models/Exam');
 const Question = require('../models/Question');
 const TestExamAttempt = require('../models/TestExamAttempt');
+const Category = require('../models/Category');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const path = require('path');
+const claudeAIService = require('../services/claudeAIService');
 
 // Cấu hình multer để upload ảnh
 const storage = multer.diskStorage({
@@ -754,6 +756,227 @@ router.post('/', async (req, res) => {
     res.status(201).json(exam);
   } catch (err) {
     res.status(400).json({ message: err.message });
+  }
+});
+
+// ==================== 🤖 TẠO ĐỀ THI AI ====================
+
+/**
+ * 🤖 POST /generate-ai-exam
+ * Tạo đề thi mới dựa trên đề thi mẫu sử dụng Claude AI
+ *
+ * Request body:
+ * {
+ *   sourceExamId: string,        // ID đề thi mẫu
+ *   title: string,                // Tên đề thi mới
+ *   class: string,                // ID lớp học mới
+ *   subject: string,              // ID môn học
+ *   duration: number,             // Thời gian làm bài (phút)
+ *   openTime: string,             // Thời gian mở đề (datetime-local)
+ *   bufferTime: number,           // Thời gian dự phòng (phút)
+ *   passingScore: number,         // Điểm đạt yêu cầu (%)
+ *   description: string,          // Mô tả đề thi
+ *   createdBy: string,            // ID giảng viên
+ *   newCategoryName: string       // Tên danh mục mới cho câu hỏi AI
+ * }
+ */
+router.post('/generate-ai-exam', async (req, res) => {
+  try {
+    const {
+      sourceExamId,
+      title,
+      class: classId,
+      subject: subjectId,
+      duration,
+      openTime: openTimeString,
+      bufferTime,
+      passingScore,
+      description,
+      createdBy,
+      newCategoryName,
+      showResultImmediately,
+      showCorrectAnswers
+    } = req.body;
+
+    console.log('🤖 Starting AI exam generation...');
+    console.log('📥 Request body:', req.body);
+    console.log(`   Source exam: ${sourceExamId}`);
+    console.log(`   New title: ${title}`);
+    console.log(`   New category: ${newCategoryName}`);
+    console.log(`   Class: ${classId}`);
+    console.log(`   Subject: ${subjectId}`);
+    console.log(`   CreatedBy: ${createdBy}`);
+
+    // 1. Validate input
+    if (!sourceExamId || !title || !classId || !subjectId || !createdBy || !newCategoryName) {
+      const missing = [];
+      if (!sourceExamId) missing.push('sourceExamId');
+      if (!title) missing.push('title');
+      if (!classId) missing.push('class');
+      if (!subjectId) missing.push('subject');
+      if (!createdBy) missing.push('createdBy');
+      if (!newCategoryName) missing.push('newCategoryName');
+
+      console.log('❌ Validation failed - Missing fields:', missing);
+      return res.status(400).json({
+        error: 'Thiếu thông tin bắt buộc',
+        missing: missing
+      });
+    }
+
+    // 2. Lấy đề thi mẫu
+    const sourceExam = await Exam.findById(sourceExamId)
+      .populate({
+        path: 'questions.questionId',
+        populate: { path: 'categoryId', select: 'name _id' }
+      })
+      .populate('categories', 'name _id')
+      .populate('subject', 'name _id');
+
+    if (!sourceExam) {
+      return res.status(404).json({ error: 'Không tìm thấy đề thi mẫu' });
+    }
+
+    console.log(`   Found source exam: ${sourceExam.title}`);
+    console.log(`   Number of questions: ${sourceExam.questions.length}`);
+
+    // 3. Lấy danh sách câu hỏi từ đề mẫu (loại bỏ câu có ảnh)
+    const allQuestions = sourceExam.questions.map(q => q.questionId);
+    const textOnlyQuestions = allQuestions.filter(q => !q.image);
+    const questionsWithImages = allQuestions.filter(q => q.image);
+
+    if (questionsWithImages.length > 0) {
+      console.log(`   ⚠️ Skipping ${questionsWithImages.length} questions with images`);
+      console.log(`   ✅ Using ${textOnlyQuestions.length} text-only questions`);
+    }
+
+    const sampleQuestions = textOnlyQuestions.map(questionData => {
+      return {
+        title: questionData.title,
+        options: questionData.options,
+        correctAnswer: questionData.correctAnswer,
+        difficulty: questionData.difficulty,
+        categoryId: questionData.categoryId,
+      };
+    });
+
+    if (sampleQuestions.length === 0) {
+      return res.status(400).json({
+        error: 'Đề thi mẫu không có câu hỏi text nào (tất cả đều có ảnh). AI chỉ có thể tạo câu hỏi từ câu hỏi text.'
+      });
+    }
+
+    // 4. Tạo danh mục mới cho câu hỏi AI
+    console.log(`   Creating new category: ${newCategoryName}`);
+    const newCategory = new Category({
+      name: newCategoryName,
+      description: `Danh mục câu hỏi AI được tạo từ đề thi: ${sourceExam.title}`,
+      subjectId: subjectId,
+      createdBy: createdBy,
+    });
+    await newCategory.save();
+    console.log(`   ✅ Category created: ${newCategory._id}`);
+
+    // 5. Gọi Claude AI để tạo câu hỏi mới
+    console.log('   🤖 Calling Claude AI to generate questions...');
+    const generatedQuestions = await claudeAIService.generateQuestions(
+      sampleQuestions,
+      {
+        numberOfQuestions: sampleQuestions.length,
+        subject: sourceExam.subject?.name || 'Chưa xác định',
+        categories: sourceExam.categories || [],
+      }
+    );
+
+    console.log(`   ✅ AI generated ${generatedQuestions.length} questions`);
+
+    // 6. Lưu câu hỏi mới vào database
+    const savedQuestions = [];
+    for (let i = 0; i < generatedQuestions.length; i++) {
+      const gq = generatedQuestions[i];
+      const newQuestion = new Question({
+        title: gq.title,
+        options: gq.options,
+        correctAnswer: gq.correctAnswer,
+        difficulty: gq.difficulty,
+        categoryId: newCategory._id,
+      });
+      await newQuestion.save();
+      savedQuestions.push(newQuestion);
+      console.log(`   ✅ Saved question ${i + 1}/${generatedQuestions.length}`);
+    }
+
+    // 7. Tạo đề thi mới với câu hỏi AI
+    const openTime = parseLocalTimeAsUTC(openTimeString);
+    let closeTime = null;
+    if (openTime && duration) {
+      closeTime = calculateCloseTime(openTime, duration, bufferTime || 5);
+    }
+
+    const newExamData = {
+      title,
+      subject: subjectId,
+      categories: [newCategory._id],
+      class: classId,
+      duration: duration || sourceExam.duration,
+      bufferTime: bufferTime || sourceExam.bufferTime || 5,
+      openTime,
+      closeTime,
+      maxAttempts: 1,
+      showResultImmediately: showResultImmediately !== undefined ? showResultImmediately : sourceExam.showResultImmediately,
+      showCorrectAnswers: showCorrectAnswers !== undefined ? showCorrectAnswers : sourceExam.showCorrectAnswers,
+      passingScore: passingScore || sourceExam.passingScore,
+      shuffleQuestions: true,
+      shuffleOptions: true,
+      status: 'draft',
+      createdBy,
+      description: description || `Đề thi AI được tạo từ: ${sourceExam.title}`,
+      questions: savedQuestions.map(q => ({
+        questionId: q._id,
+        points: 100 / savedQuestions.length,
+      })),
+    };
+
+    const newExam = new Exam(newExamData);
+    await newExam.save();
+
+    console.log(`✅ AI Exam created successfully: ${newExam.title}`);
+    console.log(`   Exam ID: ${newExam._id}`);
+    console.log(`   Category ID: ${newCategory._id}`);
+    console.log(`   Total questions: ${savedQuestions.length}`);
+
+    // 8. Populate và trả về
+    const populatedExam = await Exam.findById(newExam._id)
+      .populate('subject', 'name _id')
+      .populate('categories', 'name _id')
+      .populate('class', 'name _id className')
+      .populate({
+        path: 'questions.questionId',
+        populate: { path: 'categoryId', select: 'name _id' }
+      });
+
+    res.status(201).json({
+      success: true,
+      message: 'Tạo đề thi AI thành công',
+      exam: populatedExam,
+      newCategory: {
+        _id: newCategory._id,
+        name: newCategory.name,
+      },
+      questionsGenerated: savedQuestions.length,
+      sourceQuestionsTotal: allQuestions.length,
+      sourceQuestionsWithImages: questionsWithImages.length,
+      sourceQuestionsUsed: textOnlyQuestions.length,
+    });
+
+  } catch (err) {
+    console.error('❌ Error generating AI exam:', err);
+    console.error('❌ Error stack:', err.stack);
+    res.status(500).json({
+      error: 'Lỗi khi tạo đề thi AI',
+      message: err.message,
+      details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
   }
 });
 
