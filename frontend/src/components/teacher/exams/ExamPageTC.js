@@ -108,16 +108,38 @@ function ExamPageTC() {
 
   // ✅ NEW: Kiểm tra field nào không thể chỉnh sửa
   const getDisabledFieldsForExam = (exam) => {
-    const isPublished = exam.status === 'published';
-    const isTimeStarted = exam.openTime && new Date() >= new Date(exam.openTime);
-    
+    const hasAttempts = exam.attemptCount && exam.attemptCount > 0;
+
+    // Nếu đã có sinh viên làm bài → chỉ cho sửa showCorrectAnswers và showResultImmediately
+    if (hasAttempts) {
+      return {
+        examName: true,
+        subject: true,
+        categories: true,
+        class: true,
+        duration: true,
+        openTime: true,
+        bufferTime: true,
+        passingScore: true,
+        description: true,
+        showCorrectAnswers: false, // Cho phép sửa
+        showResultImmediately: false // Cho phép sửa
+      };
+    }
+
+    // Chưa có sinh viên làm bài → cho sửa tất cả
     return {
-      examName: isPublished || isTimeStarted,
-      subject: isPublished || isTimeStarted,
-      categories: isPublished || isTimeStarted,
-      class: isPublished || isTimeStarted,
-      duration: isPublished || isTimeStarted,
-      openTime: isPublished || isTimeStarted
+      examName: false,
+      subject: false,
+      categories: false,
+      class: false,
+      duration: false,
+      openTime: false,
+      bufferTime: false,
+      passingScore: false,
+      description: false,
+      showCorrectAnswers: false,
+      showResultImmediately: false
     };
   };
 
@@ -757,7 +779,11 @@ const loadExams = async () => {
                   color: "#856404",
                   fontSize: "14px"
                 }}>
-                  ⚠️ <strong>Lưu ý:</strong> Một số trường không thể chỉnh sửa vì đề thi đã được xuất hoặc tới thời gian làm bài.
+                  ⚠️ <strong>Lưu ý:</strong> {
+                    exams.find(e => e._id === editingExamId)?.attemptCount > 0
+                      ? "Đã có sinh viên làm bài, chỉ có thể chỉnh sửa cài đặt hiển thị kết quả và đáp án."
+                      : "Một số trường không thể chỉnh sửa vì đề thi đã được xuất hoặc tới thời gian làm bài."
+                  }
                 </div>
               )}
 

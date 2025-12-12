@@ -701,19 +701,30 @@ router.get("/student/:examId/take", async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const { teacherId } = req.query;
-    
+
     let filter = {};
     if (teacherId) {
       filter.createdBy = teacherId;
     }
-    
+
     const exams = await Exam.find(filter)
       .populate('subject', 'name _id')
       .populate('categories', 'name _id')
       .populate('class', 'name _id className');
-    
+
+    // Đếm số lượng attempt (sinh viên đã làm bài) cho mỗi exam
+    const examsWithAttemptCount = await Promise.all(
+      exams.map(async (exam) => {
+        const attemptCount = await TestExamAttempt.countDocuments({ exam: exam._id });
+        return {
+          ...exam.toObject(),
+          attemptCount
+        };
+      })
+    );
+
     console.log(`✅ Found ${exams.length} exams${teacherId ? ` for teacher ${teacherId}` : ''}`);
-    res.json(exams);
+    res.json(examsWithAttemptCount);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
