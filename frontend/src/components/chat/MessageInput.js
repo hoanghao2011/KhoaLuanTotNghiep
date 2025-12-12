@@ -1,5 +1,6 @@
 import React, { useState, useRef } from "react";
 import axios from "axios";
+import Modal from "../common/Modal";
 import "./MessageInput.css";
 
 const API_URL = "https://khoaluantotnghiep-5ff3.onrender.com/api";
@@ -9,6 +10,14 @@ const MessageInput = ({ onSendMessage, onTyping, onStopTyping }) => {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const [modal, setModal] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    onConfirm: null,
+    showCancel: false
+  });
 
   const handleMessageChange = (e) => {
     setMessage(e.target.value);
@@ -58,13 +67,27 @@ const MessageInput = ({ onSendMessage, onTyping, onStopTyping }) => {
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      alert("Vui lòng chọn file ảnh!");
+      setModal({
+        show: true,
+        type: "warning",
+        title: "Lỗi",
+        message: "Vui lòng chọn file ảnh!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
       return;
     }
 
     // Validate file size (5MB)
     if (file.size > 5 * 1024 * 1024) {
-      alert("Kích thước ảnh không được vượt quá 5MB!");
+      setModal({
+        show: true,
+        type: "warning",
+        title: "Lỗi",
+        message: "Kích thước ảnh không được vượt quá 5MB!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
       return;
     }
 
@@ -91,7 +114,14 @@ const MessageInput = ({ onSendMessage, onTyping, onStopTyping }) => {
       }
     } catch (error) {
       console.error("Error uploading image:", error);
-      alert("Không thể tải ảnh lên. Vui lòng thử lại!");
+      setModal({
+        show: true,
+        type: "error",
+        title: "Lỗi",
+        message: "Không thể tải ảnh lên. Vui lòng thử lại!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     } finally {
       setUploading(false);
     }
@@ -133,6 +163,16 @@ const MessageInput = ({ onSendMessage, onTyping, onStopTyping }) => {
       >
         Gửi
       </button>
+
+      <Modal
+        show={modal.show}
+        onClose={() => setModal({ ...modal, show: false })}
+        onConfirm={modal.onConfirm || (() => setModal({ ...modal, show: false }))}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 };

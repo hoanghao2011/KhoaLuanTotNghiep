@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../../../styles/ExamPage.css";
+import Modal from "../../common/Modal";
 
 function ExamPage() {
   const { examId } = useParams();
@@ -10,6 +11,14 @@ function ExamPage() {
   const [questions, setQuestions] = useState([]);
   const [answers, setAnswers] = useState({});
   const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    onConfirm: null,
+    showCancel: false
+  });
 
   useEffect(() => {
     const fetchExamDetails = async () => {
@@ -42,8 +51,17 @@ function ExamPage() {
       return acc;
     }, 0);
 
-    alert(`Bạn đã nộp bài! Điểm: ${score}/${questions.length * (examInfo?.scorePerQuestion || 1)}`);
-    navigate("/myExams");
+    setModal({
+      show: true,
+      type: "success",
+      title: "Nộp bài thành công",
+      message: `Bạn đã nộp bài! Điểm: ${score}/${questions.length * (examInfo?.scorePerQuestion || 1)}`,
+      onConfirm: () => {
+        setModal({ ...modal, show: false });
+        navigate("/myExams");
+      },
+      showCancel: false
+    });
   };
 
   if (loading) return <p>Đang tải đề thi...</p>;
@@ -98,6 +116,16 @@ function ExamPage() {
       </div>
 
       <button className="submit-btn" onClick={handleSubmit}>Nộp bài</button>
+
+      <Modal
+        show={modal.show}
+        onClose={() => setModal({ ...modal, show: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 }

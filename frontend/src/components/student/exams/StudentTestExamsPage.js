@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../../../styles/StudentExamsPage.css";
+import Modal from "../../common/Modal";
 
 function StudentTestExamsPage({ studentUsername }) {
   const [exams, setExams] = useState([]);
@@ -10,6 +11,14 @@ function StudentTestExamsPage({ studentUsername }) {
   const [attemptedExams, setAttemptedExams] = useState({}); // Track which exams have been attempted
   const [refreshKey, setRefreshKey] = useState(0); // Trigger re-render for status updates
   const navigate = useNavigate();
+  const [modal, setModal] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    onConfirm: null,
+    showCancel: false
+  });
 
 
   // 🔄 Re-check attempt status khi user quay lại từ trang khác
@@ -210,9 +219,23 @@ function StudentTestExamsPage({ studentUsername }) {
       navigate(`/take-test/${exam._id}`);
     } else if (status.type === "closed") {
       // ✅ NEW: Hết thời gian và chưa làm
-      alert("Bài thi đã hết hạn nộp, không thể tiếp tục làm bài!");
+      setModal({
+        show: true,
+        type: "error",
+        title: "Thông báo",
+        message: "Bài thi đã hết hạn nộp, không thể tiếp tục làm bài!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     } else {
-      alert("Đề này chưa mở hoặc chưa đặt lịch!");
+      setModal({
+        show: true,
+        type: "warning",
+        title: "Thông báo",
+        message: "Đề này chưa mở hoặc chưa đặt lịch!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     }
   };
 
@@ -307,6 +330,16 @@ function StudentTestExamsPage({ studentUsername }) {
           })}
         </div>
       )}
+
+      <Modal
+        show={modal.show}
+        onClose={() => setModal({ ...modal, show: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 }

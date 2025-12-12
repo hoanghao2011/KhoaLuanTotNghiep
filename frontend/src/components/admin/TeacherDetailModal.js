@@ -1,6 +1,7 @@
 // components/TeacherDetailModal.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import Modal from "../common/Modal";
 import "../../styles/TeacherDetailModal.css";
 
 const API_BASE = "https://khoaluantotnghiep-5ff3.onrender.com/api";
@@ -19,6 +20,15 @@ function TeacherDetailModal({ teacher, onClose, onUpdate }) {
     visible: false,
     message: "",
     onConfirm: null
+  });
+
+  const [modal, setModal] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    onConfirm: null,
+    showCancel: false
   });
 
   const loadData = async () => {
@@ -40,7 +50,14 @@ function TeacherDetailModal({ teacher, onClose, onUpdate }) {
       setAllSubjects(subjectsRes.data);
     } catch (err) {
       console.error(err);
-      alert("Không thể tải dữ liệu giảng viên!");
+      setModal({
+        show: true,
+        type: "error",
+        title: "Lỗi",
+        message: "Không thể tải dữ liệu giảng viên!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     } finally {
       setLoading(false);
     }
@@ -51,16 +68,41 @@ function TeacherDetailModal({ teacher, onClose, onUpdate }) {
   }, [teacher]);
 
   const handleResetPassword = async () => {
-    if (!window.confirm(`Đặt lại mật khẩu giảng viên "${teacher.name}" về 123456?`)) return;
-    setResetting(true);
-    try {
-      await axios.post(`${API_BASE}/users/${teacher._id}/reset-password`);
-      alert("Reset mật khẩu thành công! Mật khẩu mới: 123456");
-    } catch (err) {
-      alert("Lỗi reset mật khẩu!");
-    } finally {
-      setResetting(false);
-    }
+    setModal({
+      show: true,
+      type: "confirm",
+      title: "Xác nhận reset mật khẩu",
+      message: `Đặt lại mật khẩu giảng viên "${teacher.name}" về 123456?`,
+      onConfirm: async () => {
+        setModal({ ...modal, show: false });
+        setResetting(true);
+        try {
+          await axios.post(`${API_BASE}/users/${teacher._id}/reset-password`);
+          setModal({
+            show: true,
+            type: "success",
+            title: "Thành công",
+            message: "Reset mật khẩu thành công! Mật khẩu mới: 123456",
+            onConfirm: () => setModal({ ...modal, show: false }),
+            showCancel: false
+          });
+        } catch (err) {
+          setModal({
+            show: true,
+            type: "error",
+            title: "Lỗi",
+            message: "Lỗi reset mật khẩu!",
+            onConfirm: () => setModal({ ...modal, show: false }),
+            showCancel: false
+          });
+        } finally {
+          setResetting(false);
+        }
+      },
+      showCancel: true,
+      confirmText: "Xác nhận",
+      cancelText: "Hủy"
+    });
   };
 
   const proceedSave = async (latestAssignments, removedSubjectIds, examsBySubject, activeSemesterId) => {
@@ -89,13 +131,27 @@ function TeacherDetailModal({ teacher, onClose, onUpdate }) {
 
       await Promise.all([...deletePromises, ...createPromises]);
 
-      alert("Cập nhật môn dạy thành công!");
+      setModal({
+        show: true,
+        type: "success",
+        title: "Thành công",
+        message: "Cập nhật môn dạy thành công!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
       setEditing(false);
       await loadData(); // Reload để cập nhật giao diện
       if (onUpdate) onUpdate();
     } catch (err) {
       console.error("Lỗi trong proceedSave:", err);
-      alert("Lỗi: " + (err.response?.data?.message || err.message));
+      setModal({
+        show: true,
+        type: "error",
+        title: "Lỗi",
+        message: "Lỗi: " + (err.response?.data?.message || err.message),
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     }
   };
 
@@ -151,7 +207,14 @@ function TeacherDetailModal({ teacher, onClose, onUpdate }) {
 
     } catch (err) {
       console.error("Lỗi lưu môn dạy:", err);
-      alert("Lỗi: " + (err.response?.data?.message || err.message));
+      setModal({
+        show: true,
+        type: "error",
+        title: "Lỗi",
+        message: "Lỗi: " + (err.response?.data?.message || err.message),
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     }
   };
 
@@ -303,6 +366,17 @@ function TeacherDetailModal({ teacher, onClose, onUpdate }) {
         </div>
       )}
 
+      <Modal
+        show={modal.show}
+        onClose={() => setModal({ ...modal, show: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        confirmText={modal.confirmText}
+        cancelText={modal.cancelText}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 }

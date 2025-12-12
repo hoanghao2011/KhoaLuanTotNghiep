@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import Modal from "../common/Modal";
 import "./ClassSelector.css";
 
 const API_URL = "https://khoaluantotnghiep-5ff3.onrender.com/api";
@@ -9,6 +10,14 @@ const ClassSelector = ({ currentUser, onRoomCreated }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [creating, setCreating] = useState(null);
+  const [modal, setModal] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    onConfirm: null,
+    showCancel: false
+  });
 
   useEffect(() => {
     if (currentUser.role === "student") {
@@ -44,7 +53,14 @@ const ClassSelector = ({ currentUser, onRoomCreated }) => {
       onRoomCreated(response.data);
     } catch (err) {
       console.error("Error creating room:", err);
-      alert("Không thể tạo phòng chat. Vui lòng thử lại!");
+      setModal({
+        show: true,
+        type: "error",
+        title: "Lỗi",
+        message: "Không thể tạo phòng chat. Vui lòng thử lại!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     } finally {
       setCreating(null);
     }
@@ -114,6 +130,16 @@ const ClassSelector = ({ currentUser, onRoomCreated }) => {
           </div>
         ))}
       </div>
+
+      <Modal
+        show={modal.show}
+        onClose={() => setModal({ ...modal, show: false })}
+        onConfirm={modal.onConfirm || (() => setModal({ ...modal, show: false }))}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 };

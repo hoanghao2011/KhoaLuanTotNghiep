@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { fetchTeachingAssignments } from "../api";
 import axios from "axios";
 import "../styles/ProfileTeacher.css";
+import Modal from "./common/Modal";
 
 function Profile() {
   const navigate = useNavigate();
@@ -21,6 +22,14 @@ function Profile() {
   // 🔹 Upload avatar
   const [avatarFile, setAvatarFile] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [modal, setModal] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    onConfirm: null,
+    showCancel: false
+  });
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -154,11 +163,25 @@ function Profile() {
         const updatedUser = { ...user, avatarUrl: res.data.imageUrl };
         setUser(updatedUser);
         localStorage.setItem("app_user", JSON.stringify(updatedUser));
-        alert("Cập nhật ảnh đại diện thành công!");
+        setModal({
+          show: true,
+          type: "success",
+          title: "Thành công",
+          message: "Cập nhật ảnh đại diện thành công!",
+          onConfirm: () => setModal({ ...modal, show: false }),
+          showCancel: false
+        });
       }
     } catch (err) {
       console.error(err);
-      alert("Upload ảnh thất bại!");
+      setModal({
+        show: true,
+        type: "error",
+        title: "Lỗi",
+        message: "Upload ảnh thất bại!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     } finally {
       setUploading(false);
     }
@@ -364,6 +387,16 @@ function Profile() {
           </div>
         </div>
       )}
+
+      <Modal
+        show={modal.show}
+        onClose={() => setModal({ ...modal, show: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import "../styles/Sidebar.css";
 import { useNavigate, useLocation } from "react-router-dom";
+import Modal from "./common/Modal";
 
 function Sidebar({ user, onLogout }) {
   const navigate = useNavigate();
@@ -14,6 +15,14 @@ function Sidebar({ user, onLogout }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const location = useLocation();
+  const [modal, setModal] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    onConfirm: null,
+    showCancel: false
+  });
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
@@ -45,9 +54,18 @@ function Sidebar({ user, onLogout }) {
       const data = await res.json();
 
       if (res.ok) {
-        alert("Đổi mật khẩu thành công! Vui lòng đăng nhập lại.");
         setShowModal(false);
-        onLogout();
+        setModal({
+          show: true,
+          type: "success",
+          title: "Thành công",
+          message: "Đổi mật khẩu thành công! Vui lòng đăng nhập lại.",
+          onConfirm: () => {
+            setModal({ ...modal, show: false });
+            onLogout();
+          },
+          showCancel: false
+        });
       } else {
         setError(data.message || "Không thể đổi mật khẩu");
       }
@@ -203,6 +221,16 @@ function Sidebar({ user, onLogout }) {
           </div>
         </div>
       )}
+
+      <Modal
+        show={modal.show}
+        onClose={() => setModal({ ...modal, show: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 }

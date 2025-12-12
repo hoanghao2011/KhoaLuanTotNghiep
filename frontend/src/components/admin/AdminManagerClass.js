@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import axios from "axios";
 import * as XLSX from "xlsx";
+import Modal from "../common/Modal";
 import "../../styles/AdminManagerClass.css";
 
 const API_BASE = "https://khoaluantotnghiep-5ff3.onrender.com/api";
@@ -27,18 +28,18 @@ function AdminManagerClass() {
   const [sortConfig, setSortConfig] = useState({ key: "", direction: "asc" });
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState("all");
-const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-const [classToDelete, setClassToDelete] = useState(null);
-const [hasPracticeExam, setHasPracticeExam] = useState(false);
 
   const [importPreview, setImportPreview] = useState([]);
   const fileInputExcelRef = useRef(null);
 
   const [conflictError, setConflictError] = useState("");
-const [notifyModal, setNotifyModal] = useState({
-  open: false,
-  type: "success", // success | error
+const [modal, setModal] = useState({
+  show: false,
+  type: "info",
+  title: "",
   message: "",
+  onConfirm: null,
+  showCancel: false
 });
 
   const normalizeString = (str) =>
@@ -47,9 +48,6 @@ const [notifyModal, setNotifyModal] = useState({
   useEffect(() => {
     fetchAllData();
   }, []);
-const showNotify = (message, type = "error") => {
-  setNotifyModal({ open: true, type, message });
-};
 
   const fetchAllData = async () => {
     try {
@@ -82,8 +80,14 @@ const classesWithInfo = classRes.data.map((cls) => {
       setSemesters(semesterRes.data);
     } catch (err) {
       console.error("Lỗi lấy dữ liệu:", err);
-      showNotify("Không thể tải dữ liệu!", "error");
-
+      setModal({
+        show: true,
+        type: "error",
+        title: "Lỗi",
+        message: "Không thể tải dữ liệu!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     }
   };
 
@@ -104,16 +108,56 @@ const classesWithInfo = classRes.data.map((cls) => {
   };
 
   const handleAddClass = async () => {
-if (!newClassName.trim()) {
-  return setNotifyModal({
-    open: true,
-    type: "error",
-    message: "Nhập tên lớp!"
-  });
-}    if (!selectedSubject) return alert("Chọn môn học!");
-    if (!selectedSemester) return alert("Chọn học kỳ!");
-    if (!selectedTeacher) return alert("Chọn giảng viên!");
-    if (!maxStudents || maxStudents <= 0) return alert("Nhập số lượng SV hợp lệ!");
+    if (!newClassName.trim()) {
+      return setModal({
+        show: true,
+        type: "warning",
+        title: "Cảnh báo",
+        message: "Vui lòng nhập tên lớp!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
+    }
+    if (!selectedSubject) {
+      return setModal({
+        show: true,
+        type: "warning",
+        title: "Cảnh báo",
+        message: "Vui lòng chọn môn học!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
+    }
+    if (!selectedSemester) {
+      return setModal({
+        show: true,
+        type: "warning",
+        title: "Cảnh báo",
+        message: "Vui lòng chọn học kỳ!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
+    }
+    if (!selectedTeacher) {
+      return setModal({
+        show: true,
+        type: "warning",
+        title: "Cảnh báo",
+        message: "Vui lòng chọn giảng viên!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
+    }
+    if (!maxStudents || maxStudents <= 0) {
+      return setModal({
+        show: true,
+        type: "warning",
+        title: "Cảnh báo",
+        message: "Vui lòng nhập số lượng sinh viên hợp lệ!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
+    }
 
     try {
       await axios.post(`${API_BASE}/classes`, {
@@ -125,13 +169,23 @@ if (!newClassName.trim()) {
       });
       fetchAllData();
       resetAddModal();
-setNotifyModal({
-  open: true,
-  type: "success",
-  message: "Tạo lớp thành công!"
-});
+      setModal({
+        show: true,
+        type: "success",
+        title: "Thành công",
+        message: "Tạo lớp thành công!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     } catch (err) {
-      alert(err.response?.data?.message || "Lỗi tạo lớp!");
+      setModal({
+        show: true,
+        type: "error",
+        title: "Lỗi",
+        message: err.response?.data?.message || "Lỗi tạo lớp!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     }
   };
 
@@ -147,34 +201,55 @@ setNotifyModal({
 const handleDeleteClick = async (cls) => {
   try {
     const res = await axios.get(`${API_BASE}/practice-exams?classId=${cls._id}`);
-    setHasPracticeExam(res.data.length > 0);
-    setClassToDelete(cls);
-    setShowDeleteConfirm(true);
+    const hasPractice = res.data.length > 0;
+
+    setModal({
+      show: true,
+      type: "confirm",
+      title: "Xác nhận xóa lớp",
+      message: hasPractice
+        ? `Bạn có chắc muốn xóa lớp "${cls.className}"?\n\n⚠ Xóa sẽ xóa mất toàn bộ thông tin liên quan đến lớp này!`
+        : `Bạn có chắc muốn xóa lớp "${cls.className}"?`,
+      onConfirm: () => confirmDelete(cls._id),
+      showCancel: true,
+      confirmText: "Xóa lớp",
+      cancelText: "Hủy"
+    });
   } catch (err) {
-    setNotifyModal({
-      open: true,
+    setModal({
+      show: true,
       type: "error",
-      message: "Không thể kiểm tra đề luyện tập!"
+      title: "Lỗi",
+      message: "Không thể kiểm tra đề luyện tập!",
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
     });
   }
 };
 
-const confirmDelete = async () => {
+const confirmDelete = async (classId) => {
+  setModal({ ...modal, show: false });
   try {
-    await axios.delete(`${API_BASE}/classes/${classToDelete._id}`);
+    await axios.delete(`${API_BASE}/classes/${classId}`);
     fetchAllData();
-    alert("Xóa lớp và dữ liệu liên quan thành công!");
+    setModal({
+      show: true,
+      type: "success",
+      title: "Thành công",
+      message: "Xóa lớp và dữ liệu liên quan thành công!",
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
   } catch (err) {
-    alert("Không thể xóa lớp!");
-  } finally {
-    setShowDeleteConfirm(false);
-    setClassToDelete(null);
+    setModal({
+      show: true,
+      type: "error",
+      title: "Lỗi",
+      message: "Không thể xóa lớp!",
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
   }
-};
-
-const cancelDelete = () => {
-  setShowDeleteConfirm(false);
-  setClassToDelete(null);
 };
 
 
@@ -233,7 +308,14 @@ const openStudentModal = async (cls) => {
     const maxAllowed = currentClass?.maxStudents || 0;
 
     if (selectedStudents.length > maxAllowed) {
-      alert(`Không thể chọn quá ${maxAllowed} sinh viên!`);
+      setModal({
+        show: true,
+        type: "warning",
+        title: "Cảnh báo",
+        message: `Không thể chọn quá ${maxAllowed} sinh viên!`,
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
       return;
     }
 
@@ -241,13 +323,27 @@ const openStudentModal = async (cls) => {
       await axios.put(`${API_BASE}/classes/${selectedClass._id}`, {
         students: selectedStudents,
       });
-      alert("Phân công SV thành công!");
       setShowStudentModal(false);
       fetchAllData();
+      setModal({
+        show: true,
+        type: "success",
+        title: "Thành công",
+        message: "Phân công sinh viên thành công!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     } catch (err) {
       const msg = err.response?.data?.message || "Không thể phân công!";
       setConflictError(msg);
-      alert(msg);
+      setModal({
+        show: true,
+        type: "error",
+        title: "Lỗi",
+        message: msg,
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     }
   };
 
@@ -399,10 +495,13 @@ const handleConfirmImport = () => {
   });
 
 if (errors.length > 0) {
-  setNotifyModal({
-    open: true,
+  setModal({
+    show: true,
     type: "error",
-    message: errors.join("\n")
+    title: "Lỗi import",
+    message: errors.join("\n"),
+    onConfirm: () => setModal({ ...modal, show: false }),
+    showCancel: false
   });
   return;
 }
@@ -412,10 +511,13 @@ if (errors.length > 0) {
   const merged = Array.from(new Set([...selectedStudents, ...validStudentIds]));
 
 if (merged.length > max) {
-  setNotifyModal({
-    open: true,
-    type: "error",
-    message: `Tổng SV (${merged.length}) vượt quá giới hạn ${max}!`
+  setModal({
+    show: true,
+    type: "warning",
+    title: "Cảnh báo",
+    message: `Tổng SV (${merged.length}) vượt quá giới hạn ${max}!`,
+    onConfirm: () => setModal({ ...modal, show: false }),
+    showCancel: false
   });
   return;
 }
@@ -544,50 +646,6 @@ if (merged.length > max) {
   </tbody>
 </table>
 
-{showDeleteConfirm && (
-  <div className="modal">
-    <div className="modal-content" style={{ position: "relative", maxWidth: "420px" }}>
-      <h3 style={{ textAlign: "center", marginBottom: "10px" }}>Xác nhận xoá lớp</h3>
-
-      <p style={{ fontSize: "16px", textAlign: "center" }}>
-        Bạn có chắc muốn xoá lớp
-        <br />
-        <strong style={{ color: "#d32f2f" }}>{classToDelete?.className}</strong>?
-      </p>
-
-      {hasPracticeExam && (
-        <div style={{
-          background: "#ffebee",
-          padding: "10px",
-          borderRadius: "6px",
-          margin: "15px 0",
-          color: "#b71c1c",
-          border: "1px solid #ffcdd2",
-          fontSize: "14px"
-        }}>
-          ⚠ Xoá sẽ xoá mất toàn bộ thông tin liên quan đến lớp này!
-          <br />
-        </div>
-      )}
-
-      <div className="modal-actions">
-        <button
-          onClick={confirmDelete}
-          style={{ background: "#d9534f", color: "#fff" }}
-        >
-          Xoá lớp
-        </button>
-
-        <button
-          onClick={cancelDelete}
-          style={{ background: "#455a64", color: "#fff" }}
-        >
-          Hủy
-        </button>
-      </div>
-    </div>
-  </div>
-)}
 
 
       {/* Modal thêm lớp */}
@@ -804,30 +862,18 @@ if (merged.length > max) {
           </div>
         </div>
       )}
-{notifyModal.open && (
-  <div className="modal">
-    <div className="modal-content notify-modal" style={{ position: "relative" }}>
 
-      <button
-        onClick={() => setNotifyModal({ ...notifyModal, open: false })}
-        className="modal-close-btn"
-      >
-        ✖
-      </button>
-
-      <h3 style={{ color: notifyModal.type === "success" ? "#2e7d32" : "#d32f2f" }}>
-        {notifyModal.type === "success" ? "Thành công" : "Lỗi"}
-      </h3>
-      <p style={{ fontSize: "16px", margin: "15px 0" }}>{notifyModal.message}</p>
-      <div className="modal-actions">
-        <button onClick={() => setNotifyModal({ ...notifyModal, open: false })}>
-          Đóng
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
+      <Modal
+        show={modal.show}
+        onClose={() => setModal({ ...modal, show: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        confirmText={modal.confirmText}
+        cancelText={modal.cancelText}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 }

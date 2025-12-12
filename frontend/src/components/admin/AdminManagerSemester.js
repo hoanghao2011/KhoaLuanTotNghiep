@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import Modal from "../common/Modal";
 import "../../styles/AdminManagerSemester.css";
 
 const API_BASE = "https://khoaluantotnghiep-5ff3.onrender.com/api";
@@ -13,6 +14,14 @@ function AdminManagerSemester() {
     startDate: "", // YYYY-MM-DD (cho input date)
     endDate: "",   // YYYY-MM-DD
     isActive: false,
+  });
+  const [modal, setModal] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    onConfirm: null,
+    showCancel: false
   });
 
   // Format Date → "01/09/2024"
@@ -34,7 +43,14 @@ function AdminManagerSemester() {
       const res = await axios.get(`${API_BASE}/semesters`);
       setSemesters(res.data);
     } catch (err) {
-      alert("Lỗi tải danh sách học kỳ!");
+      setModal({
+        show: true,
+        type: "error",
+        title: "Lỗi",
+        message: "Lỗi tải danh sách học kỳ!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     }
   };
 
@@ -66,17 +82,38 @@ function AdminManagerSemester() {
 
 const handleSubmit = async () => {
   if (!formData.name.trim()) {
-    return alert("Vui lòng nhập tên học kỳ!");
+    return setModal({
+      show: true,
+      type: "warning",
+      title: "Cảnh báo",
+      message: "Vui lòng nhập tên học kỳ!",
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
   }
   if (!formData.startDate || !formData.endDate) {
-    return alert("Vui lòng chọn ngày bắt đầu và kết thúc!");
+    return setModal({
+      show: true,
+      type: "warning",
+      title: "Cảnh báo",
+      message: "Vui lòng chọn ngày bắt đầu và kết thúc!",
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
   }
-  
+
   const start = new Date(formData.startDate);
   const end = new Date(formData.endDate);
-  
+
   if (start >= end) {
-    return alert("Ngày bắt đầu phải trước ngày kết thúc!");
+    return setModal({
+      show: true,
+      type: "warning",
+      title: "Cảnh báo",
+      message: "Ngày bắt đầu phải trước ngày kết thúc!",
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
   }
 
   // Nếu đánh dấu active, kiểm tra ngày hôm nay nằm trong khoảng (fix timezone)
@@ -87,9 +124,16 @@ const handleSubmit = async () => {
     startCheckDate.setHours(0, 0, 0, 0);
     const endCheckDate = new Date(formData.endDate);
     endCheckDate.setHours(0, 0, 0, 0);
-    
+
     if (today < startCheckDate || today > endCheckDate) {
-      return alert("Không thể đặt học kỳ này là kỳ hiện tại vì ngày hôm nay không nằm trong thời gian mở của học kỳ!");
+      return setModal({
+        show: true,
+        type: "warning",
+        title: "Cảnh báo",
+        message: "Không thể đặt học kỳ này là kỳ hiện tại vì ngày hôm nay không nằm trong thời gian mở của học kỳ!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     }
   }
 
@@ -106,7 +150,14 @@ const handleSubmit = async () => {
   });
 
   if (overlap) {
-    return alert("Khoảng thời gian của học kỳ này trùng lặp với học kỳ khác. Vui lòng chọn lại!");
+    return setModal({
+      show: true,
+      type: "warning",
+      title: "Cảnh báo",
+      message: "Khoảng thời gian của học kỳ này trùng lặp với học kỳ khác. Vui lòng chọn lại!",
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
   }
 
   const payload = {
@@ -119,28 +170,78 @@ const handleSubmit = async () => {
   try {
     if (editingSemester) {
       await axios.put(`${API_BASE}/semesters/${editingSemester._id}`, payload);
-      alert("Cập nhật học kỳ thành công!");
+      closeModal();
+      fetchSemesters();
+      setModal({
+        show: true,
+        type: "success",
+        title: "Thành công",
+        message: "Cập nhật học kỳ thành công!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     } else {
       await axios.post(`${API_BASE}/semesters`, payload);
-      alert("Tạo học kỳ thành công!");
+      closeModal();
+      fetchSemesters();
+      setModal({
+        show: true,
+        type: "success",
+        title: "Thành công",
+        message: "Tạo học kỳ thành công!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     }
-    closeModal();
-    fetchSemesters();
   } catch (err) {
-    alert(err.response?.data?.message || "Lỗi khi lưu học kỳ!");
+    setModal({
+      show: true,
+      type: "error",
+      title: "Lỗi",
+      message: err.response?.data?.message || "Lỗi khi lưu học kỳ!",
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
   }
 };
 
 
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Xóa học kỳ này? Các lớp liên quan sẽ bị ảnh hưởng!")) return;
+    setModal({
+      show: true,
+      type: "confirm",
+      title: "Xác nhận xóa",
+      message: "Xóa học kỳ này? Các lớp liên quan sẽ bị ảnh hưởng!",
+      onConfirm: () => confirmDelete(id),
+      showCancel: true,
+      confirmText: "Xóa",
+      cancelText: "Hủy"
+    });
+  };
+
+  const confirmDelete = async (id) => {
+    setModal({ ...modal, show: false });
     try {
       await axios.delete(`${API_BASE}/semesters/${id}`);
-      alert("Xóa thành công!");
       fetchSemesters();
+      setModal({
+        show: true,
+        type: "success",
+        title: "Thành công",
+        message: "Xóa học kỳ thành công!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     } catch (err) {
-      alert(err.response?.data?.message || "Không thể xóa (đang có lớp sử dụng)");
+      setModal({
+        show: true,
+        type: "error",
+        title: "Lỗi",
+        message: err.response?.data?.message || "Không thể xóa (đang có lớp sử dụng)",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     }
   };
 
@@ -247,6 +348,18 @@ const handleSubmit = async () => {
           </div>
         </div>
       )}
+
+      <Modal
+        show={modal.show}
+        onClose={() => setModal({ ...modal, show: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        confirmText={modal.confirmText}
+        cancelText={modal.cancelText}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import Modal from "../common/Modal";
 import "../../styles/AdminManagerSubjects.css";
 
 const API_BASE = "https://khoaluantotnghiep-5ff3.onrender.com/api";
@@ -15,6 +16,15 @@ const AdminManagerSubjects = () => {
   const [subjectToDelete, setSubjectToDelete] = useState(null);
   const [deleteSuccessModal, setDeleteSuccessModal] = useState(false);
 
+  const [modal, setModal] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    onConfirm: null,
+    showCancel: false
+  });
+
   useEffect(() => {
     fetchSubjects();
   }, []);
@@ -26,25 +36,48 @@ const AdminManagerSubjects = () => {
       setSubjects(res.data);
     } catch (error) {
       console.error("Lỗi lấy môn học:", error);
-      alert("Không thể tải danh sách môn học!");
+      setModal({
+        show: true,
+        type: "error",
+        title: "Lỗi",
+        message: "Không thể tải danh sách môn học!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     }
   };
 
   // Thêm môn học mới
   const handleAddSubject = async () => {
     const name = newSubjectName.trim();
-    if (!name) return alert("Vui lòng nhập tên môn học!");
+    if (!name) {
+      setModal({
+        show: true,
+        type: "warning",
+        title: "Cảnh báo",
+        message: "Vui lòng nhập tên môn học!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
+      return;
+    }
 
     try {
       const res = await axios.post(`${API_BASE}/subjects`, { name });
       setSubjects(prev => [...prev, res.data]);
       setNewSubjectName("");
       setModalVisible(false);
-      // alert("Thêm môn học thành công!");
       setSuccessModal(true);
     } catch (error) {
       console.error("Lỗi thêm môn học:", error);
-      alert(error.response?.data?.message || "Có lỗi xảy ra!");
+      setModal({
+        show: true,
+        type: "error",
+        title: "Lỗi",
+        message: error.response?.data?.message || "Có lỗi xảy ra!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     }
   };
 
@@ -69,7 +102,14 @@ const handleDelete = async () => {
 
   } catch (err) {
     console.error("Lỗi xoá môn:", err);
-    alert("Không thể xoá môn học!");
+    setModal({
+      show: true,
+      type: "error",
+      title: "Lỗi",
+      message: "Không thể xoá môn học!",
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
   }
 };
 
@@ -191,7 +231,19 @@ const handleDelete = async () => {
         </div>
       </div>
     )}
-    </div>    
+
+      <Modal
+        show={modal.show}
+        onClose={() => setModal({ ...modal, show: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        confirmText={modal.confirmText}
+        cancelText={modal.cancelText}
+        showCancel={modal.showCancel}
+      />
+    </div>
   );
 };
 

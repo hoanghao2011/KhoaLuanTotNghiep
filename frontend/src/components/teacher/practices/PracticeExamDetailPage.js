@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "../../../styles/PracticeExamDetailPage.css";
-import RichTextEditor from "../../RichTextEditor"; 
+import RichTextEditor from "../../RichTextEditor";
+import Modal from "../../common/Modal"; 
 
 const BASE_URL = "https://khoaluantotnghiep-5ff3.onrender.com/api";
 
@@ -53,6 +54,14 @@ const [toast, setToast] = useState({
   open: false,
   message: "",
   type: "success", // success | error
+});
+const [modal, setModal] = useState({
+  show: false,
+  type: "info",
+  title: "",
+  message: "",
+  onConfirm: null,
+  showCancel: false
 });
 
 
@@ -323,7 +332,14 @@ const fetchExam = async () => {
       setBankQuestions(availableQuestions);
     } catch (err) {
       console.error("Lỗi khi load ngân hàng câu hỏi:", err);
-      alert("Lỗi: Không thể tải ngân hàng câu hỏi");
+      setModal({
+        show: true,
+        type: "error",
+        title: "Lỗi",
+        message: "Không thể tải ngân hàng câu hỏi",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     }
   };
 
@@ -390,7 +406,14 @@ const fetchExam = async () => {
 
   const handleAddFromBank = async () => {
     if (selectedBankQuestions.length === 0) {
-      alert("Vui lòng chọn ít nhất một câu hỏi");
+      setModal({
+        show: true,
+        type: "warning",
+        title: "Thông báo",
+        message: "Vui lòng chọn ít nhất một câu hỏi",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
       return;
     }
 
@@ -406,23 +429,51 @@ const fetchExam = async () => {
       await fetchQuestions();
       setShowQuestionBankModal(false);
       setSelectedBankQuestions([]);
-      alert(`Thành công! Đã thêm ${selectedBankQuestions.length} câu hỏi`);
+      setModal({
+        show: true,
+        type: "success",
+        title: "Thành công",
+        message: `Đã thêm ${selectedBankQuestions.length} câu hỏi`,
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     } catch (error) {
-      alert("Lỗi: Không thể thêm câu hỏi từ ngân hàng");
+      setModal({
+        show: true,
+        type: "error",
+        title: "Lỗi",
+        message: "Không thể thêm câu hỏi từ ngân hàng",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
       console.error(error);
     }
   };
 
 const handleAddQuestion = async () => {
   if (!title || title.trim() === "" || (title === "<p></p>" || title === "<div></div>" || title === "<br>")) {
-    alert("Vui lòng nhập câu hỏi");
+    setModal({
+      show: true,
+      type: "warning",
+      title: "Thông báo",
+      message: "Vui lòng nhập câu hỏi",
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
     return;
   }
 
   // Kiểm tra 4 đáp án không được để trống
   const trimmedOptions = options.map(opt => opt.trim());
   if (trimmedOptions.some(opt => opt === "" || opt === "<p></p>" || opt === "<br>")) {
-    alert("Vui lòng nhập đầy đủ 4 đáp án");
+    setModal({
+      show: true,
+      type: "warning",
+      title: "Thông báo",
+      message: "Vui lòng nhập đầy đủ 4 đáp án",
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
     return;
   }
 
@@ -449,11 +500,25 @@ const handleAddQuestion = async () => {
     }
 
     await fetchQuestions();
-    alert("Đã thêm câu hỏi thành công!");
+    setModal({
+      show: true,
+      type: "success",
+      title: "Thành công",
+      message: "Đã thêm câu hỏi thành công!",
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
     setIsAddQuestionModalOpen(false);
     resetManualForm();
   } catch (error) {
-    alert("Lỗi: " + error.message);
+    setModal({
+      show: true,
+      type: "error",
+      title: "Lỗi",
+      message: error.message,
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
     console.error(error);
   }
 };
@@ -1126,7 +1191,7 @@ const confirmDeleteQuestion = async () => {
 )}
 {toast.open && (
   <div style={{
-    position: "fixed", bottom: "20px", right: "20px", 
+    position: "fixed", bottom: "20px", right: "20px",
     backgroundColor: toast.type === "success" ? "#27ae60" : "#e74c3c",
     color: "white", padding: "12px 20px", borderRadius: "8px", zIndex: 9999,
     boxShadow: "0 4px 12px rgba(0,0,0,0.2)"
@@ -1136,6 +1201,16 @@ const confirmDeleteQuestion = async () => {
       onClick={() => setToast({ ...toast, open: false })}>×</button>
   </div>
 )}
+
+<Modal
+  show={modal.show}
+  onClose={() => setModal({ ...modal, show: false })}
+  onConfirm={modal.onConfirm}
+  title={modal.title}
+  message={modal.message}
+  type={modal.type}
+  showCancel={modal.showCancel}
+/>
 
     </div>
   );

@@ -1,6 +1,7 @@
 // components/StudentDetailModal.js
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import Modal from "../common/Modal";
 import "../../styles/StudentDetailModal.css";
 
 function StudentDetailModal({ student, onClose }) {
@@ -11,6 +12,15 @@ function StudentDetailModal({ student, onClose }) {
   // Modal confirm + success
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  const [modal, setModal] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    onConfirm: null,
+    showCancel: false
+  });
 
   useEffect(() => {
     const fetchClasses = async () => {
@@ -55,7 +65,14 @@ function StudentDetailModal({ student, onClose }) {
       setShowSuccess(true); // show modal success
     } catch (err) {
       console.error(err);
-      alert("Lỗi khi reset mật khẩu. Vui lòng thử lại!");
+      setModal({
+        show: true,
+        type: "error",
+        title: "Lỗi",
+        message: "Lỗi khi reset mật khẩu. Vui lòng thử lại!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     } finally {
       setResetting(false);
     }
@@ -211,6 +228,18 @@ function StudentDetailModal({ student, onClose }) {
           </div>
         </div>
       )}
+
+      <Modal
+        show={modal.show}
+        onClose={() => setModal({ ...modal, show: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        confirmText={modal.confirmText}
+        cancelText={modal.cancelText}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import axios from "axios";
 import * as XLSX from "xlsx";
+import Modal from "../common/Modal";
 import "../../styles/AdminManagerStudent.css";
 import StudentDetailModal from "../admin/StudentDetailModal";
 const normalizeString = (str) =>
@@ -19,6 +20,15 @@ const [deleteConfirm, setDeleteConfirm] = useState({
   show: false,
   id: null,
   name: "",
+});
+
+const [modal, setModal] = useState({
+  show: false,
+  type: "info",
+  title: "",
+  message: "",
+  onConfirm: null,
+  showCancel: false
 });
 
 
@@ -47,7 +57,14 @@ const [deleteConfirm, setDeleteConfirm] = useState({
       setStudents(studentData);
     } catch (error) {
       console.error("Lỗi lấy danh sách sinh viên:", error);
-      alert("Không thể tải dữ liệu!");
+      setModal({
+        show: true,
+        type: "error",
+        title: "Lỗi",
+        message: "Không thể tải dữ liệu!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
     }
   };
 
@@ -59,7 +76,14 @@ const handleDelete = async () => {
     setSuccessMessage("Xóa sinh viên thành công!");
   } catch (error) {
     console.error("Lỗi khi xóa sinh viên:", error);
-    alert("Không thể xóa sinh viên!");
+    setModal({
+      show: true,
+      type: "error",
+      title: "Lỗi",
+      message: "Không thể xóa sinh viên!",
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
   }
 };
 
@@ -70,18 +94,39 @@ const handleDelete = async () => {
   const name = newStudent.name.trim();
 
   if (!username || !name) {
-    alert("Vui lòng nhập mã sinh viên và họ tên!");
+    setModal({
+      show: true,
+      type: "warning",
+      title: "Cảnh báo",
+      message: "Vui lòng nhập mã sinh viên và họ tên!",
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
     return;
   }
 
   if (username.length > 8) {
-    alert("Mã sinh viên không được vượt quá 8 ký tự!");
+    setModal({
+      show: true,
+      type: "warning",
+      title: "Cảnh báo",
+      message: "Mã sinh viên không được vượt quá 8 ký tự!",
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
     return;
   }
 
   const isDuplicate = students.some(s => s.username === username);
   if (isDuplicate) {
-    alert(`Mã sinh viên ${username} đã tồn tại!`);
+    setModal({
+      show: true,
+      type: "warning",
+      title: "Cảnh báo",
+      message: `Mã sinh viên ${username} đã tồn tại!`,
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
     return;
   }
 
@@ -96,7 +141,14 @@ const handleDelete = async () => {
     setNewStudent({ username: "", name: "" });
     setSuccessMessage("Thêm sinh viên thành công! Mật khẩu mặc định: 123456");
   } catch (error) {
-    alert(error.response?.data?.message || "Không thể thêm sinh viên!");
+    setModal({
+      show: true,
+      type: "error",
+      title: "Lỗi",
+      message: error.response?.data?.message || "Không thể thêm sinh viên!",
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
   }
 };
 
@@ -175,18 +227,27 @@ const handleExcelFileChange = (e) => {
 
       // === KIỂM TRA SỐ CỘT ===
       if (data.length === 0) {
-        alert("File Excel rỗng! Vui lòng kiểm tra lại.");
+        setModal({
+          show: true,
+          type: "warning",
+          title: "Cảnh báo",
+          message: "File Excel rỗng! Vui lòng kiểm tra lại.",
+          onConfirm: () => setModal({ ...modal, show: false }),
+          showCancel: false
+        });
         return;
       }
 
       const headerRow = data[0];
       if (headerRow.length !== 2) {
-        alert(
-          `Lỗi định dạng file Excel!\n\n` +
-          `File phải có đúng 2 cột: "Mã SV" và "Họ tên".\n` +
-          `Hiện tại file có ${headerRow.length} cột.\n\n` +
-          `Vui lòng tải lại file mẫu và nhập đúng định dạng.`
-        );
+        setModal({
+          show: true,
+          type: "error",
+          title: "Lỗi định dạng",
+          message: `File phải có đúng 2 cột: "Mã SV" và "Họ tên".\nHiện tại file có ${headerRow.length} cột.\n\nVui lòng tải lại file mẫu và nhập đúng định dạng.`,
+          onConfirm: () => setModal({ ...modal, show: false }),
+          showCancel: false
+        });
         return;
       }
 
@@ -197,51 +258,85 @@ const handleExcelFileChange = (e) => {
       const isHeaderMatch = normalizedHeader.every((h, i) => h === expectedNormalized[i]);
 
       if (!isHeaderMatch) {
-        if (!window.confirm(
-          `Cảnh báo: Tiêu đề cột không khớp với mẫu!\n\n` +
-          `Dòng 1: [${headerRow.join(", ")}]\n` +
-          `Mẫu yêu cầu: [${expectedHeaders.join(", ")}]\n\n` +
-          `Bạn có muốn tiếp tục import không?`
-        )) {
-          return;
-        }
+        setModal({
+          show: true,
+          type: "confirm",
+          title: "Cảnh báo",
+          message: `Tiêu đề cột không khớp với mẫu!\n\nDòng 1: [${headerRow.join(", ")}]\nMẫu yêu cầu: [${expectedHeaders.join(", ")}]\n\nBạn có muốn tiếp tục import không?`,
+          onConfirm: () => {
+            setModal({ ...modal, show: false });
+            processExcelRows(data);
+          },
+          showCancel: true,
+          confirmText: "Tiếp tục",
+          cancelText: "Hủy"
+        });
+        return;
       }
 
-const rows = data.slice(1);
-const studentsFromExcel = rows
-  .map((row, idx) => {
-    // Kiểm tra số lượng cột
-    if (row.length !== 2) {
-      alert(`Lỗi ở dòng ${idx + 2}: File chỉ được phép có 2 cột (Mã SV, Họ tên).`);
-      throw new Error("Sai số lượng cột");
-    }
-
-const username = String(row[0] || "").trim();
-const name = String(row[1] || "").trim();
-
-if (!username || !name) {
-  alert(`Lỗi ở dòng ${idx + 2}: Mã SV hoặc Họ tên bị trống.`);
-  throw new Error("Dữ liệu trống");
-}
-
-if (username.length > 8) {
-  alert(`Lỗi ở dòng ${idx + 2}: Mã sinh viên "${username}" vượt quá 8 ký tự.`);
-  throw new Error("Mã SV quá dài");
-}
-
-
-    return { username, name, password: "123456", row: idx + 2 };
-  })
-  .filter(Boolean);
-
-
-      setImportPreview(studentsFromExcel);
+      processExcelRows(data);
     } catch (error) {
       setImportPreview([]);
       if (fileInputExcelRef.current) fileInputExcelRef.current.value = "";
     }
   };
   reader.readAsBinaryString(file);
+};
+
+const processExcelRows = (data) => {
+  try {
+    const rows = data.slice(1);
+    const studentsFromExcel = rows
+      .map((row, idx) => {
+        // Kiểm tra số lượng cột
+        if (row.length !== 2) {
+          setModal({
+            show: true,
+            type: "error",
+            title: "Lỗi",
+            message: `Lỗi ở dòng ${idx + 2}: File chỉ được phép có 2 cột (Mã SV, Họ tên).`,
+            onConfirm: () => setModal({ ...modal, show: false }),
+            showCancel: false
+          });
+          throw new Error("Sai số lượng cột");
+        }
+
+        const username = String(row[0] || "").trim();
+        const name = String(row[1] || "").trim();
+
+        if (!username || !name) {
+          setModal({
+            show: true,
+            type: "error",
+            title: "Lỗi",
+            message: `Lỗi ở dòng ${idx + 2}: Mã SV hoặc Họ tên bị trống.`,
+            onConfirm: () => setModal({ ...modal, show: false }),
+            showCancel: false
+          });
+          throw new Error("Dữ liệu trống");
+        }
+
+        if (username.length > 8) {
+          setModal({
+            show: true,
+            type: "error",
+            title: "Lỗi",
+            message: `Lỗi ở dòng ${idx + 2}: Mã sinh viên "${username}" vượt quá 8 ký tự.`,
+            onConfirm: () => setModal({ ...modal, show: false }),
+            showCancel: false
+          });
+          throw new Error("Mã SV quá dài");
+        }
+
+        return { username, name, password: "123456", row: idx + 2 };
+      })
+      .filter(Boolean);
+
+    setImportPreview(studentsFromExcel);
+  } catch (error) {
+    setImportPreview([]);
+    if (fileInputExcelRef.current) fileInputExcelRef.current.value = "";
+  }
 };
 
   const handleConfirmImport = async () => {
@@ -253,14 +348,28 @@ const seen = new Set();
 for (const s of importPreview) {
   // Trùng trong file import
   if (seen.has(s.username)) {
-    alert(`Mã SV ${s.username} bị trùng trong file Excel (dòng ${s.row}).`);
+    setModal({
+      show: true,
+      type: "error",
+      title: "Lỗi",
+      message: `Mã SV ${s.username} bị trùng trong file Excel (dòng ${s.row}).`,
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
     return;
   }
   seen.add(s.username);
 
   // Trùng với hệ thống
   if (existingUsernames.includes(s.username)) {
-    alert(`Mã SV ${s.username} đã tồn tại trong hệ thống!`);
+    setModal({
+      show: true,
+      type: "error",
+      title: "Lỗi",
+      message: `Mã SV ${s.username} đã tồn tại trong hệ thống!`,
+      onConfirm: () => setModal({ ...modal, show: false }),
+      showCancel: false
+    });
     return;
   }
 
@@ -284,7 +393,14 @@ for (const s of importPreview) {
       if (fileInputExcelRef.current) fileInputExcelRef.current.value = "";
       setSuccessMessage(`Thêm thành công ${added.length} sinh viên! Mật khẩu mặc định: 123456`);
     } catch (error) {
-      alert("Lỗi khi thêm sinh viên từ Excel!");
+      setModal({
+        show: true,
+        type: "error",
+        title: "Lỗi",
+        message: "Lỗi khi thêm sinh viên từ Excel!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
       console.error(error);
     }
   };
@@ -615,6 +731,17 @@ onClick={() =>
   </div>
 )}
 
+      <Modal
+        show={modal.show}
+        onClose={() => setModal({ ...modal, show: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        confirmText={modal.confirmText}
+        cancelText={modal.cancelText}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 };

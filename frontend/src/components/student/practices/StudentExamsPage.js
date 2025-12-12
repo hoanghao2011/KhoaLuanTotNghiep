@@ -3,12 +3,21 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../../../styles/StudentExamsPage.css";
+import Modal from "../../common/Modal";
 
 function StudentExamsPage({ studentUsername }) {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0); // Trigger re-render for status updates
   const navigate = useNavigate();
+  const [modal, setModal] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    onConfirm: null,
+    showCancel: false
+  });
 
   // Lấy userId từ current user (app_user) để tách biệt dữ liệu của các user khác nhau
   const currentUser = JSON.parse(localStorage.getItem("app_user") || "{}");
@@ -84,7 +93,16 @@ function StudentExamsPage({ studentUsername }) {
   const handleStartExam = (exam) => {
     const status = getExamStatus(exam);
     if (status.type === "open") navigate(`/exam/${exam._id}`);
-    else alert("Đề này chưa mở hoặc đã đóng!");
+    else {
+      setModal({
+        show: true,
+        type: "warning",
+        title: "Thông báo",
+        message: "Đề này chưa mở hoặc đã đóng!",
+        onConfirm: () => setModal({ ...modal, show: false }),
+        showCancel: false
+      });
+    }
   };
 
   // Xem kết quả
@@ -168,6 +186,16 @@ function StudentExamsPage({ studentUsername }) {
             })}
         </div>
       )}
+
+      <Modal
+        show={modal.show}
+        onClose={() => setModal({ ...modal, show: false })}
+        onConfirm={modal.onConfirm}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+        showCancel={modal.showCancel}
+      />
     </div>
   );
 }
