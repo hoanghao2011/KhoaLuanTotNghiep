@@ -10,6 +10,8 @@ console.log('   NODE_ENV:', process.env.NODE_ENV);
 console.log('   ANTHROPIC_API_KEY:', process.env.ANTHROPIC_API_KEY ? '✅ Loaded' : '❌ Missing');
 
 const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
 const cors = require("cors");
 const connectDB = require("./src/config/db");
 const path = require("path");
@@ -25,8 +27,27 @@ const userRoutes = require("./src/routes/userRoutes");
 const semesterRoutes = require("./src/routes/semesterRoutes");
 const classRoutes = require("./src/routes/classRoutes");
 const examRoutes = require("./src/routes/testExamRoutes");
+const chatRoutes = require("./src/routes/chatRoutes");
+
+// Import Socket.IO handler
+const initializeChatSocket = require("./src/sockets/chatSocket");
 
 const app = express(); // BÂY GIỜ MỚI CÓ express!
+const server = http.createServer(app);
+
+// Initialize Socket.IO with CORS
+const io = new Server(server, {
+  cors: {
+    origin: process.env.NODE_ENV === "production"
+      ? ["https://kltn-gamma.vercel.app", "https://khoaluantotnghiep-5ff3.onrender.com"]
+      : ["http://localhost:3000"],
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+// Initialize chat socket handlers
+initializeChatSocket(io);
 
 // Middleware
 app.use(cors());
@@ -47,6 +68,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/semesters", semesterRoutes);
 app.use("/api/classes", classRoutes);
 app.use("/api/exams", examRoutes);
+app.use("/api/chat", chatRoutes);
 // Trang chủ
 app.get("/", (req, res) => {
   res.send("API is running... Welcome to Exam Management System!");
@@ -66,9 +88,10 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start Server
+// Start Server with Socket.IO
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`API Docs: http://localhost:${PORT}/api`);
+  console.log(`Socket.IO ready for chat connections`);
 });

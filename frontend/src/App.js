@@ -26,10 +26,11 @@ import PractiecSummary from "./components/student/practices/PractiecSummary.js";
 import PracticeReview from "./components/student/practices/PracticeReview.js";
 import ReportPage from "./components/teacher/ReportPage.js"; // ✅ NEW - Báo cáo thống kê
 
-
-
-
 import Profile from "./components/ProfileTeacher.js"; // ✅ KEPT - Profile
+
+// Chat imports
+import FloatingChatButton from "./components/chat/FloatingChatButton";
+import { initializeSocket, disconnectSocket } from "./socket";
 
 function App() {
   const navigate = useNavigate();
@@ -41,23 +42,43 @@ function App() {
     const storedUser = localStorage.getItem("app_user");
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+
+        // Initialize socket connection for logged-in users
+        if (parsedUser && parsedUser._id && parsedUser.role) {
+          initializeSocket(parsedUser._id, parsedUser.role);
+        }
       } catch (err) {
         console.error("Error parsing user:", err);
         localStorage.removeItem("app_user");
       }
     }
+
+    // Cleanup: disconnect socket when component unmounts
+    return () => {
+      disconnectSocket();
+    };
   }, []);
 
   const handleLogin = (userObj) => {
     setUser(userObj);
     localStorage.setItem("app_user", JSON.stringify(userObj));
+
+    // Initialize socket connection after login
+    if (userObj && userObj._id && userObj.role) {
+      initializeSocket(userObj._id, userObj.role);
+    }
+
     if (userObj.role === "teacher") navigate("/profile");
     else if (userObj.role === "admin") navigate("/admin/classes");
     else navigate("/student");
   };
 
   const handleLogout = () => {
+    // Disconnect socket before logout
+    disconnectSocket();
+
     setUser(null);
     localStorage.removeItem("app_user");
     navigate("/login");
@@ -241,6 +262,11 @@ function App() {
           />
         </Routes>
       </div>
+
+      {/* Floating Chat Button - Only for teachers and students */}
+      {(user.role === "teacher" || user.role === "student") && (
+        <FloatingChatButton currentUser={user} />
+      )}
     </div>
   );
 }
