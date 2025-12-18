@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import QuestionAnalysis from './QuestionAnalysis';
 import TeachingRecommendations from './TeachingRecommendations';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://khoaluantotnghiep-5ff3.onrender.com/api';
+const API_URL = "https://khoaluantotnghiep-5ff3.onrender.com/api";
 
 function ExamAnalysisPage() {
   const { examId } = useParams();

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'https://khoaluantotnghiep-5ff3.onrender.com/api';
+const API_URL = "https://khoaluantotnghiep-5ff3.onrender.com/api";
 
 const QuestionAnalysis = ({ examId, examTitle }) => {
   const [loading, setLoading] = useState(false);
