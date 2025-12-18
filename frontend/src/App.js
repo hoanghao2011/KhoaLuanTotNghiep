@@ -25,6 +25,7 @@ import PracticePage from "./components/student/practices/PracticePage.js";
 import PractiecSummary from "./components/student/practices/PractiecSummary.js";
 import PracticeReview from "./components/student/practices/PracticeReview.js";
 import ReportPage from "./components/teacher/ReportPage.js"; // ✅ NEW - Báo cáo thống kê
+import ExamAnalysisPage from "./components/teacher/ExamAnalysisPage.js"; // ✅ NEW - Phân tích đề thi
 
 import Profile from "./components/ProfileTeacher.js"; // ✅ KEPT - Profile
 
@@ -218,6 +219,18 @@ function App() {
             element={
               user.role === "teacher" ? (
                 <ReportPage />
+              ) : (
+                <Navigate to="/student" />
+              )
+            }
+          />
+
+          {/* ✅ EXAM ANALYSIS - NEW */}
+          <Route
+            path="/exam-analysis/:examId"
+            element={
+              user.role === "teacher" ? (
+                <ExamAnalysisPage />
               ) : (
                 <Navigate to="/student" />
               )

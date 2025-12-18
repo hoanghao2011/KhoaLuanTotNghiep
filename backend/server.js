@@ -28,6 +28,7 @@ const semesterRoutes = require("./src/routes/semesterRoutes");
 const classRoutes = require("./src/routes/classRoutes");
 const examRoutes = require("./src/routes/testExamRoutes");
 const chatRoutes = require("./src/routes/chatRoutes");
+const examAnalysisRoutes = require("./src/routes/examAnalysisRoutes");
 
 // Import Socket.IO handler
 const initializeChatSocket = require("./src/sockets/chatSocket");
@@ -69,6 +70,7 @@ app.use("/api/semesters", semesterRoutes);
 app.use("/api/classes", classRoutes);
 app.use("/api/exams", examRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/exam-analysis", examAnalysisRoutes);
 // Trang chủ
 app.get("/", (req, res) => {
   res.send("API is running... Welcome to Exam Management System!");

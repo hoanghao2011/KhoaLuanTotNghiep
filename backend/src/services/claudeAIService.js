@@ -205,6 +205,57 @@ ${index + 1}. **${cleanTitle}** (Độ khó: ${q.difficulty || 'Trung bình'})
       throw new Error(`Không thể parse response: ${error.message}`);
     }
   }
+
+  /**
+   * Phân tích chất lượng đề thi và đề xuất phương pháp giảng dạy
+   * @param {String} prompt - Prompt phân tích
+   * @returns {Promise<Object>} - Kết quả phân tích từ Claude AI
+   */
+  async analyzeExamQuality(prompt) {
+    try {
+      console.log('   📤 Sending request to Claude AI...');
+
+      // Gọi Claude API
+      const message = await anthropic.messages.create({
+        model: 'claude-sonnet-4-5-20250929',
+        max_tokens: 8000,
+        temperature: 0.7,
+        messages: [
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+      });
+
+      // Parse response
+      const responseText = message.content[0].text;
+      console.log('   📥 Received response from Claude AI');
+
+      // Tìm JSON trong response (có thể có hoặc không có markdown code block)
+      let jsonText = responseText.trim();
+
+      // Loại bỏ markdown code block nếu có
+      const jsonMatch = jsonText.match(/```json\s*([\s\S]*?)\s*```/);
+      if (jsonMatch) {
+        jsonText = jsonMatch[1];
+      } else {
+        // Tìm object JSON thuần
+        const objectMatch = jsonText.match(/\{[\s\S]*\}/);
+        if (objectMatch) {
+          jsonText = objectMatch[0];
+        }
+      }
+
+      const analysis = JSON.parse(jsonText);
+
+      return analysis;
+    } catch (error) {
+      console.error('❌ Error analyzing exam quality with Claude AI:', error);
+      console.error('   Error details:', error.message);
+      throw new Error(`Không thể phân tích chất lượng đề thi: ${error.message}`);
+    }
+  }
 }
 
 module.exports = new ClaudeAIService();

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import * as XLSX from "xlsx";
 import "../../styles/ReportPage.css";
@@ -7,6 +8,7 @@ import "../../styles/ReportPage.css";
 const API_URL = "https://khoaluantotnghiep-5ff3.onrender.com/api";
 
 function ReportPage() {
+  const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
   const [selectedClass, setSelectedClass] = useState(null);
   const [classData, setClassData] = useState(null);
@@ -389,13 +391,31 @@ function ReportPage() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px" }}>
             <h3 style={{ margin: 0 }}>Chọn bài kiểm tra để xem báo cáo:</h3>
             {selectedExam && (
-              <button
-                className="export-btn"
-                onClick={exportToExcel}
-                title="Export kết quả ra file Excel"
-              >
-                📥 Export Excel
-              </button>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button
+                  style={{
+                    padding: "10px 20px",
+                    backgroundColor: "#8b5cf6",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontWeight: "600",
+                    fontSize: "14px"
+                  }}
+                  onClick={() => navigate(`/exam-analysis/${selectedExam}`)}
+                  title="Phân tích câu hỏi và đề xuất giảng dạy với AI"
+                >
+                  📊 Phân tích đề thi
+                </button>
+                <button
+                  className="export-btn"
+                  onClick={exportToExcel}
+                  title="Export kết quả ra file Excel"
+                >
+                  📥 Export Excel
+                </button>
+              </div>
             )}
           </div>
           <div className="exam-buttons">
